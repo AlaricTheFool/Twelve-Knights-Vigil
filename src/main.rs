@@ -51,6 +51,7 @@ fn setup(mut commands: Commands, assets: Res<AssetServer>) {
         rock: assets.load("models/tile_rock.glb#Scene0"),
         straight: assets.load("models/tile_straight.glb#Scene0"),
         corner: assets.load("models/tile_cornerSquare.glb#Scene0"),
+        tree: assets.load("models/tile_tree.glb#Scene0"),
     };
 
     commands.insert_resource(tile_models);
@@ -60,7 +61,7 @@ fn setup(mut commands: Commands, assets: Res<AssetServer>) {
             .looking_at(Vec3::new(0.0, 0.3, 0.0), Vec3::Y),
         ..default()
     });
-    const HALF_SIZE: f32 = 1.0;
+    const HALF_SIZE: f32 = 10.0;
     commands.spawn_bundle(DirectionalLightBundle {
         directional_light: DirectionalLight {
             shadow_projection: OrthographicProjection {
@@ -95,8 +96,7 @@ fn rotate_tiles(time: Res<Time>, mut query: Query<&mut Transform, With<TileMap>>
         transform.rotation = Quat::from_euler(
             EulerRot::ZYX,
             0.0,
-            //time.seconds_since_startup() as f32 * std::f32::consts::TAU / 10.0,
-            0.0,
+            time.seconds_since_startup() as f32 * std::f32::consts::TAU / 20.0,
             0.0,
         )
     }
@@ -112,8 +112,13 @@ fn initialize_tilemap(
     }
 }
 
-fn set_light_direction(mut query: Query<&mut Transform, With<DirectionalLight>>) {
+fn set_light_direction(mut query: Query<&mut Transform, With<DirectionalLight>>, time: Res<Time>) {
     for mut transform in query.iter_mut() {
-        transform.rotation = Quat::from_euler(EulerRot::ZYX, 0.0, 0.0, -std::f32::consts::FRAC_PI_4)
+        transform.rotation = Quat::from_euler(
+            EulerRot::ZYX,
+            -std::f32::consts::FRAC_PI_4,
+            0.0,
+            -std::f32::consts::FRAC_PI_4,
+        )
     }
 }

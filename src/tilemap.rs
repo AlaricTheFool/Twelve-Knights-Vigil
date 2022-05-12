@@ -4,7 +4,14 @@ use crate::prelude::*;
 pub enum TileType {
     Empty,
     Rock,
-    Path,
+    Tree,
+    Path(PathType, f32),
+}
+
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum PathType {
+    Straight,
+    Corner,
 }
 
 pub struct TileModels {
@@ -12,6 +19,7 @@ pub struct TileModels {
     pub rock: Handle<Scene>,
     pub straight: Handle<Scene>,
     pub corner: Handle<Scene>,
+    pub tree: Handle<Scene>,
 }
 
 #[derive(Component)]
@@ -40,50 +48,17 @@ impl TileMap {
         (0..self.height).for_each(|y| {
             (0..self.width).for_each(|x| {
                 let tile = tile_data[(x + (y * self.width)) as usize];
-                let mut rotation = 0.0;
-                let model = match tile {
-                    TileType::Empty => models.empty.clone(),
-                    TileType::Rock => models.rock.clone(),
-                    TileType::Path => {
-                        let mut n_path = match self.coord_to_idx(x, y - 1) {
-                            Ok(idx) => tile_data[idx] == TileType::Path,
-                            Err(_) => false,
+                let (model, rotation) = match tile {
+                    TileType::Empty => (models.empty.clone(), 0.0),
+                    TileType::Rock => (models.rock.clone(), 0.0),
+                    TileType::Path(p_type, rot) => {
+                        let m = match p_type {
+                            PathType::Straight => models.straight.clone(),
+                            PathType::Corner => models.corner.clone(),
                         };
-                        let mut s_path = match self.coord_to_idx(x, y + 1) {
-                            Ok(idx) => tile_data[idx] == TileType::Path,
-                            Err(_) => false,
-                        };
-                        let mut w_path = match self.coord_to_idx(x - 1, y) {
-                            Ok(idx) => tile_data[idx] == TileType::Path,
-                            Err(_) => false,
-                        };
-                        let mut e_path = match self.coord_to_idx(x + 1, y) {
-                            Ok(idx) => tile_data[idx] == TileType::Path,
-                            Err(_) => false,
-                        };
-
-                        let mut result = None;
-
-                        while !result.is_some() {
-                            result = match (n_path, s_path, e_path, w_path) {
-                                (true, false, true, false) => {
-                                    eprintln!("Found a corner match at coords [{x}, {y}] with rotation: {rotation}");
-                                    Some(models.corner.clone())},
-                                (false, false, true, true) => Some(models.straight.clone()),
-                                (false, false, true, false) => Some(models.straight.clone()),
-                                _ => None,
-                            };
-                            let (temp_n, temp_s, temp_e, temp_w) = (n_path, s_path, e_path, w_path);
-                            (n_path, s_path, e_path, w_path) = (temp_e, temp_w, temp_s, temp_n);
-                            rotation += std::f32::consts::FRAC_PI_2;
-
-                            if rotation > std::f32::consts::PI * 2.0 {
-                                panic!("Tried every configuration but found no match. Exits: {n_path}, {e_path}, {s_path}, {w_path}");
-                            }
-                        }
-
-                        result.unwrap()
+                        (m, rot)
                     }
+                    TileType::Tree => (models.tree.clone(), 0.0),
                 };
 
                 let entity = commands
@@ -110,32 +85,83 @@ impl TileMap {
 
         let mut current_x = 0;
         let mut current_y = thread_rng().gen_range(1..self.height - 1);
+        let mut just_went_up = false;
         while current_x < self.width {
             let max_dist_right = 4.min(self.width - current_x);
             let dist_right = thread_rng().gen_range(2.min(max_dist_right)..=max_dist_right);
 
             (current_x..current_x + dist_right).for_each(|x| {
-                result[self.coord_to_idx(x, current_y).unwrap()] = TileType::Path;
+                let corner_rot = match just_went_up {
+                    true => std::f32::consts::PI,
+                    false => -std::f32::consts::FRAC_PI_2,
+                };
+                result[self.coord_to_idx(x, current_y).unwrap()] = match x {
+                    x if x == current_x && current_x != 0 => {
+                        TileType::Path(PathType::Corner, corner_rot)
+                    }
+
+                    x if x == current_x + dist_right => {
+                        TileType::Path(PathType::Corner, corner_rot)
+                    }
+
+                    _ => TileType::Path(PathType::Straight, std::f32::consts::FRAC_PI_2),
+                };
             });
 
             current_x += dist_right;
 
             if current_x < self.width {
-                let new_y = thread_rng().gen_range(1..self.height - 1);
+                let mut new_y = current_y;
 
-                (current_y.min(new_y)..=new_y.max(current_y)).for_each(|y| {
-                    result[self.coord_to_idx(current_x, y).unwrap()] = TileType::Path;
-                });
+                while new_y == current_y {
+                    new_y = thread_rng().gen_range(1..self.height - 1);
+                }
+
+                (current_y.min(new_y)..=new_y.max(current_y))
+                    .enumerate()
+                    .for_each(|(idx, y)| {
+                        result[self.coord_to_idx(current_x, y).unwrap()] =
+                            match (new_y > current_y, idx) {
+                                (true, 0) => {
+                                    TileType::Path(PathType::Corner, std::f32::consts::FRAC_PI_2)
+                                }
+
+                                (false, i) if i == (current_y - new_y) as usize => {
+                                    TileType::Path(PathType::Corner, 0.0)
+                                }
+
+                                _ => TileType::Path(PathType::Straight, 0.0),
+                            };
+                    });
+                just_went_up = new_y < current_y;
 
                 current_y = new_y;
             }
         }
 
+        result = result
+            .iter()
+            .map(|tile| match *tile {
+                TileType::Empty => {
+                    if thread_rng().gen::<f32>() < 0.9 {
+                        *tile
+                    } else {
+                        if thread_rng().gen() {
+                            TileType::Tree
+                        } else {
+                            TileType::Rock
+                        }
+                    }
+                }
+                _ => *tile,
+            })
+            .collect();
+
         (0..self.height).for_each(|y| {
             (0..self.width).for_each(|x| {
                 let tile = result[self.coord_to_idx(x, y).unwrap()];
                 let t_char = match tile {
-                    TileType::Path => "x",
+                    TileType::Path(_, _) => "x",
                     _ => "_",
                 };
                 eprint!("{t_char}");
