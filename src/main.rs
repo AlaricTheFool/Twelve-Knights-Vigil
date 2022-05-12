@@ -5,6 +5,7 @@ mod prelude {
     pub use crate::components::*;
     pub use crate::tilemap::*;
     pub use bevy::prelude::*;
+    pub use iyes_loopless::prelude::*;
     pub use rand::*;
 }
 
@@ -26,6 +27,8 @@ fn main() {
     })
     .add_plugins(DefaultPlugins)
     .add_startup_system(setup)
+    .add_startup_system(respawn_tilemap)
+    .add_system(respawn_tilemap.run_if(respawn_pushed))
     .add_system(initialize_tilemap)
     .add_system(rotate_tiles)
     .add_system(set_light_direction);
@@ -38,17 +41,20 @@ fn main() {
     app.run();
 }
 
+fn respawn_pushed(input: Res<Input<KeyCode>>) -> bool {
+    input.just_pressed(KeyCode::R)
+}
+
 fn setup(mut commands: Commands, assets: Res<AssetServer>) {
     let tile_models = TileModels {
         empty: assets.load("models/tile.glb#Scene0"),
         rock: assets.load("models/tile_rock.glb#Scene0"),
+        straight: assets.load("models/tile_straight.glb#Scene0"),
+        corner: assets.load("models/tile_cornerSquare.glb#Scene0"),
     };
 
     commands.insert_resource(tile_models);
 
-    commands
-        .spawn_bundle(TransformBundle::from(Transform { ..default() }))
-        .insert(TileMap::new(16, 16));
     commands.spawn_bundle(PerspectiveCameraBundle {
         transform: Transform::from_xyz(0.7, 8.0, 16.0)
             .looking_at(Vec3::new(0.0, 0.3, 0.0), Vec3::Y),
@@ -73,12 +79,24 @@ fn setup(mut commands: Commands, assets: Res<AssetServer>) {
     });
 }
 
+fn respawn_tilemap(mut commands: Commands, query: Query<Entity, With<TileMap>>) {
+    for entity in query.iter() {
+        commands.entity(entity).despawn_recursive();
+    }
+
+    commands
+        .spawn_bundle(TransformBundle::from(Transform { ..default() }))
+        .insert(TileMap::new(16, 16))
+        .insert(Name::new("Map"));
+}
+
 fn rotate_tiles(time: Res<Time>, mut query: Query<&mut Transform, With<TileMap>>) {
     for mut transform in query.iter_mut() {
         transform.rotation = Quat::from_euler(
             EulerRot::ZYX,
             0.0,
-            time.seconds_since_startup() as f32 * std::f32::consts::TAU / 10.0,
+            //time.seconds_since_startup() as f32 * std::f32::consts::TAU / 10.0,
+            0.0,
             0.0,
         )
     }
