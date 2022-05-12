@@ -1,8 +1,12 @@
 mod components;
+mod enemy;
+mod messages;
 mod tilemap;
 
 mod prelude {
     pub use crate::components::*;
+    pub use crate::enemy::*;
+    pub use crate::messages::*;
     pub use crate::tilemap::*;
     pub use bevy::prelude::*;
     pub use iyes_loopless::prelude::*;
@@ -25,13 +29,16 @@ fn main() {
         color: Color::WHITE,
         brightness: 1.0 / 5.0f32,
     })
+    .insert_resource(CurrentMap(None))
     .add_plugins(DefaultPlugins)
     .add_startup_system(setup)
     .add_startup_system(respawn_tilemap)
     .add_system(respawn_tilemap.run_if(respawn_pushed))
     .add_system(initialize_tilemap)
     .add_system(rotate_tiles)
-    .add_system(set_light_direction);
+    .add_system(set_light_direction)
+    .add_system(spawn_enemies)
+    .add_system(move_track_followers);
 
     #[cfg(feature = "debug")]
     {
@@ -55,6 +62,14 @@ fn setup(mut commands: Commands, assets: Res<AssetServer>) {
     };
 
     commands.insert_resource(tile_models);
+
+    let enemy_models = EnemyModels {
+        basic: assets.load("models/enemy_ufoRed.glb#Scene0"),
+    };
+
+    commands.insert_resource(enemy_models);
+
+    commands.insert_resource(SpawnTimer(Timer::from_seconds(1.0, true)));
 
     commands.spawn_bundle(PerspectiveCameraBundle {
         transform: Transform::from_xyz(0.7, 8.0, 16.0)
@@ -80,15 +95,27 @@ fn setup(mut commands: Commands, assets: Res<AssetServer>) {
     });
 }
 
-fn respawn_tilemap(mut commands: Commands, query: Query<Entity, With<TileMap>>) {
+fn respawn_tilemap(
+    mut commands: Commands,
+    query: Query<Entity, With<TileMap>>,
+    enemy_query: Query<Entity, With<Enemy>>,
+    mut current_map: ResMut<CurrentMap>,
+) {
+    for entity in enemy_query.iter() {
+        commands.entity(entity).despawn_recursive();
+    }
+
     for entity in query.iter() {
         commands.entity(entity).despawn_recursive();
     }
 
-    commands
+    let new_map = commands
         .spawn_bundle(TransformBundle::from(Transform { ..default() }))
         .insert(TileMap::new(16, 16))
-        .insert(Name::new("Map"));
+        .insert(Name::new("Map"))
+        .id();
+
+    current_map.0 = Some(new_map);
 }
 
 fn rotate_tiles(time: Res<Time>, mut query: Query<&mut Transform, With<TileMap>>) {

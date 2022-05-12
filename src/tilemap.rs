@@ -1,5 +1,7 @@
 use crate::prelude::*;
 
+pub struct CurrentMap(pub Option<Entity>);
+
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum TileType {
     Empty,
@@ -29,6 +31,11 @@ pub struct TileMap {
     pub height: i32,
 }
 
+#[derive(Component)]
+pub struct Track {
+    pub points: Vec<Transform>,
+}
+
 impl TileMap {
     pub fn new(width: i32, height: i32) -> Self {
         Self {
@@ -45,6 +52,7 @@ impl TileMap {
         models: &TileModels,
     ) {
         let tile_data = self.generate_random_map_layout();
+        let mut path_points = Vec::new();
         (0..self.height).for_each(|y| {
             (0..self.width).for_each(|x| {
                 let tile = tile_data[(x + (y * self.width)) as usize];
@@ -56,6 +64,8 @@ impl TileMap {
                             PathType::Straight => models.straight.clone(),
                             PathType::Corner => models.corner.clone(),
                         };
+                        path_points
+                            .push(Transform::from_translation(self.calculate_tile_pos(x, y)));
                         (m, rot)
                     }
                     TileType::Tree => (models.tree.clone(), 0.0),
@@ -76,6 +86,10 @@ impl TileMap {
 
                 self.tiles.push(entity);
             });
+        });
+
+        commands.get_or_spawn(parent).insert(Track {
+            points: path_points,
         });
     }
 
