@@ -33,12 +33,13 @@ fn main() {
     .add_plugins(DefaultPlugins)
     .add_startup_system(setup)
     .add_startup_system(respawn_tilemap)
-    .add_system(respawn_tilemap.run_if(respawn_pushed))
+    .add_system_to_stage(CoreStage::PreUpdate, respawn_tilemap.run_if(respawn_pushed))
     .add_system(initialize_tilemap)
     .add_system(rotate_tiles)
     .add_system(set_light_direction)
     .add_system(spawn_enemies)
-    .add_system(move_track_followers);
+    .add_system(move_track_followers)
+    .add_system(update_track_followers);
 
     #[cfg(feature = "debug")]
     {

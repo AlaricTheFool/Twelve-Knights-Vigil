@@ -33,6 +33,7 @@ pub fn spawn_enemies(
                 progress: 0.0,
                 speed: 1.0,
             })
+            .insert(Parent(map.0.unwrap()))
             .with_children(|p| {
                 p.spawn_bundle(TransformBundle {
                     local: Transform::from_xyz(0.0, 1.0, 0.0).with_scale(Vec3::new(0.5, 0.5, 0.5)),
@@ -45,15 +46,25 @@ pub fn spawn_enemies(
     }
 }
 
-pub fn move_track_followers(
-    mut query: Query<&TrackFollower>,
+pub fn move_track_followers(mut query: Query<&mut TrackFollower>) {
+    for mut t_follower in query.iter_mut() {
+        t_follower.progress += t_follower.speed;
+    }
+}
+
+pub fn update_track_followers(
+    query: Query<(Entity, &TrackFollower)>,
     world: &World,
     mut commands: Commands,
 ) {
-    for t_follower in query.iter() {
+    for (entity, t_follower) in query.iter() {
         let track = world
             .entity(t_follower.track)
             .get::<Track>()
             .expect("A track follower is following a track that doesn't exist.");
+
+        let new_transform = track.get_point(t_follower.progress);
+
+        commands.entity(entity).insert(new_transform);
     }
 }
