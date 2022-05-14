@@ -3,6 +3,9 @@ mod enemy;
 mod messages;
 mod tilemap;
 
+#[cfg(feature = "debug")]
+mod debug;
+
 mod prelude {
     pub use crate::components::*;
     pub use crate::enemy::*;
@@ -11,6 +14,9 @@ mod prelude {
     pub use bevy::prelude::*;
     pub use iyes_loopless::prelude::*;
     pub use rand::*;
+
+    #[cfg(feature = "debug")]
+    pub use debug;
 }
 
 use crate::prelude::*;
@@ -43,7 +49,9 @@ fn main() {
 
     #[cfg(feature = "debug")]
     {
-        app.add_plugin(bevy_inspector_egui::WorldInspectorPlugin::new());
+        app.add_plugin(bevy_inspector_egui::WorldInspectorPlugin::new())
+            .add_startup_system(debug::initialize_debug_resources)
+            .add_system(debug::add_tilemap_point_markers);
     }
 
     app.run();

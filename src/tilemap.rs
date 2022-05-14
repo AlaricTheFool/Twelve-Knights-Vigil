@@ -95,7 +95,7 @@ impl TileMap {
         let mut just_went_up = false;
 
         path_points.push(Transform::from_translation(
-            self.calculate_tile_pos(current_x, current_y),
+            self.calculate_tile_pos(current_x - 1, current_y),
         ));
         while current_x < self.width {
             let max_dist_right = 4.min(self.width - current_x);
