@@ -80,9 +80,9 @@ impl TileMap {
             });
         });
 
-        commands.get_or_spawn(parent).insert(Track {
-            points: path_points,
-        });
+        commands
+            .get_or_spawn(parent)
+            .insert(Track::new(path_points));
     }
 
     fn generate_random_map_layout(&self) -> (Vec<TileType>, Vec<Transform>) {
@@ -208,23 +208,44 @@ impl TileMap {
 #[derive(Component)]
 pub struct Track {
     pub points: Vec<Transform>,
+    pub length: f32,
 }
 
 impl Track {
-    pub fn get_point(&self, progress: f32) -> Transform {
-        let first_point = self
-            .points
-            .first()
-            .expect("There is an empty track.")
-            .translation;
-        let last_point = self
-            .points
-            .last()
-            .expect("There is an empty track")
-            .translation;
-        let dist = first_point.distance(last_point);
-        let pct = (progress / dist).min(1.0);
+    pub fn new(points: Vec<Transform>) -> Self {
+        let length = points
+            .iter()
+            .enumerate()
+            .skip(1)
+            .fold(0.0, |acc, (idx, point)| {
+                let last_point = points[idx - 1];
+                let dist = point.translation.distance(last_point.translation);
+                acc + dist
+            });
 
-        Transform::from_translation(first_point.lerp(last_point, pct))
+        Self { points, length }
+    }
+    pub fn get_point(&self, progress: f32) -> Transform {
+        let mut remaining_progress = progress;
+        self.points
+            .iter()
+            .enumerate()
+            .find_map(|(idx, point)| {
+                if idx == self.points.len() - 1 {
+                    return Some(*point);
+                };
+                let next_point = self.points[idx + 1];
+                let dist = next_point.translation.distance(point.translation);
+
+                if remaining_progress > dist {
+                    remaining_progress -= dist;
+                    None
+                } else {
+                    let pct = remaining_progress / dist;
+                    let pos = point.translation.lerp(next_point.translation, pct);
+                    Some(Transform::from_translation(pos))
+                }
+            })
+            .expect("Tried to get a point on an empty track.")
     }
 }

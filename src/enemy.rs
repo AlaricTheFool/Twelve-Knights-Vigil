@@ -31,12 +31,12 @@ pub fn spawn_enemies(
             .insert(TrackFollower {
                 track: map.0.unwrap(),
                 progress: 0.0,
-                speed: 1.0,
+                speed: 0.1,
             })
             .insert(Parent(map.0.unwrap()))
             .with_children(|p| {
                 p.spawn_bundle(TransformBundle {
-                    local: Transform::from_xyz(0.0, 1.0, 0.0).with_scale(Vec3::new(0.5, 0.5, 0.5)),
+                    local: Transform::from_xyz(0.0, 0.4, 0.0).with_scale(Vec3::new(0.5, 0.5, 0.5)),
                     ..default()
                 })
                 .with_children(|p| {
@@ -63,8 +63,12 @@ pub fn update_track_followers(
             .get::<Track>()
             .expect("A track follower is following a track that doesn't exist.");
 
-        let new_transform = track.get_point(t_follower.progress);
+        if t_follower.progress < track.length {
+            let new_transform = track.get_point(t_follower.progress);
 
-        commands.entity(entity).insert(new_transform);
+            commands.entity(entity).insert(new_transform);
+        } else {
+            commands.entity(entity).despawn_recursive();
+        }
     }
 }
