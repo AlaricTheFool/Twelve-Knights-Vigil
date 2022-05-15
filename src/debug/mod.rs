@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use bevy_egui::{egui, EguiContext, EguiPlugin};
 
 const VERTICAL_MARKER_HEIGHT: f32 = 1.0;
 
@@ -7,7 +8,17 @@ pub struct DebugModels {
     pub debug_material: Handle<StandardMaterial>,
 }
 
-pub fn initialize_debug_resources(
+pub struct TKDebugPlugin;
+
+impl Plugin for TKDebugPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_plugin(bevy_inspector_egui::WorldInspectorPlugin::new())
+            .add_startup_system(initialize_debug_models)
+            .add_system(add_tilemap_point_markers);
+    }
+}
+
+fn initialize_debug_models(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,

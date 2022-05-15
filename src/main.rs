@@ -49,9 +49,7 @@ fn main() {
 
     #[cfg(feature = "debug")]
     {
-        app.add_plugin(bevy_inspector_egui::WorldInspectorPlugin::new())
-            .add_startup_system(debug::initialize_debug_resources)
-            .add_system(debug::add_tilemap_point_markers);
+        app.add_plugin(debug::TKDebugPlugin);
     }
 
     app.run();
