@@ -1,5 +1,6 @@
 use crate::prelude::*;
-use bevy_egui::{egui, EguiContext, EguiPlugin};
+
+mod fps;
 
 const VERTICAL_MARKER_HEIGHT: f32 = 1.0;
 
@@ -12,8 +13,9 @@ pub struct TKDebugPlugin;
 
 impl Plugin for TKDebugPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(bevy_inspector_egui::WorldInspectorPlugin::new())
+        app.add_plugin(fps::FPSTrackerPlugin)
             .add_startup_system(initialize_debug_models)
+            .add_plugin(bevy_inspector_egui::WorldInspectorPlugin::new())
             .add_system(add_tilemap_point_markers);
     }
 }
