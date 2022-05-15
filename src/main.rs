@@ -28,6 +28,7 @@ fn main() {
         title: "Twelve Knight's Vigil".to_string(),
         width: 1280.0,
         height: 720.0,
+        present_mode: bevy::window::PresentMode::Immediate,
         ..default()
     })
     .insert_resource(ClearColor(Color::rgb(0.5, 0.5, 0.9)))
@@ -35,7 +36,16 @@ fn main() {
         color: Color::WHITE,
         brightness: 1.0 / 5.0f32,
     })
-    .insert_resource(CurrentMap(None))
+    .insert_resource(CurrentMap(None));
+
+    let mut fixed_stage = SystemStage::parallel();
+    fixed_stage.add_system(move_track_followers);
+
+    app.add_stage_before(
+        CoreStage::Update,
+        "fixed_stages",
+        FixedTimestepStage::new(std::time::Duration::from_millis(16)).with_stage(fixed_stage),
+    )
     .add_plugins(DefaultPlugins)
     .add_startup_system(setup)
     .add_startup_system(respawn_tilemap)
@@ -44,7 +54,6 @@ fn main() {
     .add_system(rotate_tiles)
     .add_system(set_light_direction)
     .add_system(spawn_enemies)
-    .add_system(move_track_followers)
     .add_system(update_track_followers);
 
     #[cfg(feature = "debug")]

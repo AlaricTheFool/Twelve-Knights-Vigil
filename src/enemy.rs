@@ -31,7 +31,7 @@ pub fn spawn_enemies(
             .insert(TrackFollower {
                 track: map.0.unwrap(),
                 progress: 0.0,
-                speed: 0.1,
+                speed: 0.05,
             })
             .insert(Parent(map.0.unwrap()))
             .with_children(|p| {
