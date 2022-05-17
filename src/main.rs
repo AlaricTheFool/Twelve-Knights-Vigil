@@ -1,4 +1,5 @@
 mod enemy;
+mod input;
 mod messages;
 mod raycast;
 mod tilemap;
@@ -8,6 +9,7 @@ mod debug;
 
 mod prelude {
     pub use crate::enemy::*;
+    pub use crate::input::*;
     pub use crate::messages::*;
     pub use crate::raycast::*;
     pub use crate::tilemap::*;
@@ -40,7 +42,9 @@ fn main() {
     .insert_resource(CurrentMap(None));
 
     let mut fixed_stage = SystemStage::parallel();
-    fixed_stage.add_system(move_track_followers);
+    fixed_stage
+        .add_system(move_track_followers)
+        .add_system(rotate_tiles);
 
     app.add_stage_before(
         CoreStage::Update,
@@ -49,11 +53,11 @@ fn main() {
     )
     .add_plugins(DefaultPlugins)
     .add_plugin(PickablePlugin)
+    .add_plugin(InputPlugin)
     .add_startup_system(setup)
     .add_startup_system(respawn_tilemap)
     .add_system_to_stage(CoreStage::PreUpdate, respawn_tilemap.run_if(respawn_pushed))
     .add_system(initialize_tilemap)
-    .add_system(rotate_tiles)
     .add_system(set_light_direction)
     .add_system(spawn_enemies)
     .add_system(update_track_followers);
@@ -138,14 +142,15 @@ fn respawn_tilemap(
     current_map.0 = Some(new_map);
 }
 
-fn rotate_tiles(time: Res<Time>, mut query: Query<&mut Transform, With<TileMap>>) {
+fn rotate_tiles(map_control: Res<MapControl>, mut query: Query<&mut Transform, With<TileMap>>) {
     for mut transform in query.iter_mut() {
-        transform.rotation = Quat::from_euler(
+        let added_rot = Quat::from_euler(
             EulerRot::ZYX,
             0.0,
-            time.seconds_since_startup() as f32 * std::f32::consts::TAU / 20.0,
+            -map_control.rotation_dir * std::f32::consts::PI * 2.0 * 0.25 * (1.0 / 60.0),
             0.0,
-        )
+        );
+        transform.rotate(added_rot);
     }
 }
 
