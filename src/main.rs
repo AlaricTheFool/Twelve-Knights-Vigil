@@ -1,6 +1,7 @@
 mod components;
 mod enemy;
 mod messages;
+mod raycast;
 mod tilemap;
 
 #[cfg(feature = "debug")]
@@ -10,8 +11,13 @@ mod prelude {
     pub use crate::components::*;
     pub use crate::enemy::*;
     pub use crate::messages::*;
+    pub use crate::raycast::*;
     pub use crate::tilemap::*;
     pub use bevy::prelude::*;
+    pub use bevy_mod_raycast::{
+        DefaultPluginState, DefaultRaycastingPlugin, RayCastMesh, RayCastMethod, RayCastSource,
+        RaycastSystem,
+    };
     pub use iyes_loopless::prelude::*;
     pub use rand::*;
 
@@ -47,6 +53,7 @@ fn main() {
         FixedTimestepStage::new(std::time::Duration::from_millis(16)).with_stage(fixed_stage),
     )
     .add_plugins(DefaultPlugins)
+    .add_plugin(PickablePlugin)
     .add_startup_system(setup)
     .add_startup_system(respawn_tilemap)
     .add_system_to_stage(CoreStage::PreUpdate, respawn_tilemap.run_if(respawn_pushed))
@@ -87,11 +94,13 @@ fn setup(mut commands: Commands, assets: Res<AssetServer>) {
 
     commands.insert_resource(SpawnTimer(Timer::from_seconds(1.0, true)));
 
-    commands.spawn_bundle(PerspectiveCameraBundle {
-        transform: Transform::from_xyz(0.7, 8.0, 16.0)
-            .looking_at(Vec3::new(0.0, 0.3, 0.0), Vec3::Y),
-        ..default()
-    });
+    commands
+        .spawn_bundle(PerspectiveCameraBundle {
+            transform: Transform::from_xyz(0.7, 8.0, 16.0)
+                .looking_at(Vec3::new(0.0, 0.3, 0.0), Vec3::Y),
+            ..default()
+        })
+        .insert(RayCastSource::<PickableRaycastSet>::new());
     const HALF_SIZE: f32 = 10.0;
     commands.spawn_bundle(DirectionalLightBundle {
         directional_light: DirectionalLight {

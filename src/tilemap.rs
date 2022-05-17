@@ -71,6 +71,7 @@ impl TileMap {
                     }))
                     .insert(Parent(parent))
                     .insert(Name::new(format!("Tile [{x}, {y}]")))
+                    .insert(Tile)
                     .with_children(|p| {
                         p.spawn_scene(model);
                     })
