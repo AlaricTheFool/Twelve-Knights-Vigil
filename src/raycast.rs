@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use bevy_mod_raycast::{DefaultPluginState, DefaultRaycastingPlugin, Intersection, RayCastMethod};
 
 pub struct PickableRaycastSet;
 
@@ -9,6 +10,7 @@ impl Plugin for PickablePlugin {
         app.add_plugin(DefaultRaycastingPlugin::<PickableRaycastSet>::default())
             .insert_resource(DefaultPluginState::<PickableRaycastSet>::default())
             .add_system(add_raycast_components_to_tile_meshes)
+            .add_system(update_cursor_state)
             .add_system(update_raycast_with_cursor);
 
         #[cfg(feature = "debug")]
@@ -17,6 +19,9 @@ impl Plugin for PickablePlugin {
         );
     }
 }
+
+#[derive(Component)]
+struct RootEntity(Entity);
 
 pub fn update_raycast_with_cursor(
     mut cursor: EventReader<CursorMoved>,
@@ -45,7 +50,8 @@ fn add_raycast_components_to_tile_meshes(
         children_with_meshes.iter().for_each(|e| {
             commands
                 .entity(*e)
-                .insert(RayCastMesh::<PickableRaycastSet>::default());
+                .insert(RayCastMesh::<PickableRaycastSet>::default())
+                .insert(RootEntity(entity));
         })
     });
 }
@@ -72,4 +78,23 @@ fn find_children_with_meshes_recursive(
     }
 
     return result;
+}
+
+fn update_cursor_state(
+    source_query: Query<&RayCastSource<PickableRaycastSet>>,
+    root_query: Query<&RootEntity>,
+    tile_query: Query<&Tile>,
+) {
+    let source = source_query.single();
+
+    if let Some((entity, _)) = source.intersect_top() {
+        let root_entity = root_query
+            .get(entity)
+            .expect("There is a pickable tile with no root entity!");
+        let tile = tile_query
+            .get(root_entity.0)
+            .expect("There is a tile root entity without a tile component.");
+
+        eprintln!("Tile Hovered: [{}, {}]", tile.x, tile.y);
+    }
 }

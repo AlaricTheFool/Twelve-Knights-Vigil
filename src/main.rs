@@ -1,4 +1,3 @@
-mod components;
 mod enemy;
 mod messages;
 mod raycast;
@@ -8,16 +7,12 @@ mod tilemap;
 mod debug;
 
 mod prelude {
-    pub use crate::components::*;
     pub use crate::enemy::*;
     pub use crate::messages::*;
     pub use crate::raycast::*;
     pub use crate::tilemap::*;
     pub use bevy::prelude::*;
-    pub use bevy_mod_raycast::{
-        DefaultPluginState, DefaultRaycastingPlugin, RayCastMesh, RayCastMethod, RayCastSource,
-        RaycastSystem,
-    };
+    pub use bevy_mod_raycast::{RayCastMesh, RayCastSource};
     pub use iyes_loopless::prelude::*;
     pub use rand::*;
 

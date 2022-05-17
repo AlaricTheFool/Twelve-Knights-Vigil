@@ -2,6 +2,12 @@ use crate::prelude::*;
 
 pub struct CurrentMap(pub Option<Entity>);
 
+#[derive(Component)]
+pub struct Tile {
+    pub x: i32,
+    pub y: i32,
+}
+
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum TileType {
     Empty,
@@ -71,7 +77,7 @@ impl TileMap {
                     }))
                     .insert(Parent(parent))
                     .insert(Name::new(format!("Tile [{x}, {y}]")))
-                    .insert(Tile)
+                    .insert(Tile { x, y })
                     .with_children(|p| {
                         p.spawn_scene(model);
                     })
