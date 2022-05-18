@@ -42,7 +42,7 @@ fn send_build_tower_messages(
                 eprintln!("Do the thing! {coord:?}");
                 commands
                     .spawn()
-                    .insert(Message)
+                    .insert(Message::new())
                     .insert(BuildTower { location: coord });
             }
         }

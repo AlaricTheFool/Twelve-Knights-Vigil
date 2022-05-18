@@ -22,6 +22,9 @@ mod prelude {
 
     #[cfg(feature = "debug")]
     pub use debug;
+
+    #[cfg(feature = "debug")]
+    pub use bevy_inspector_egui::RegisterInspectable;
 }
 
 use crate::prelude::*;
