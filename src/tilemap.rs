@@ -8,7 +8,7 @@ pub struct Tile {
     pub y: i32,
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Component)]
 pub enum TileType {
     Empty,
     Rock,
@@ -78,6 +78,7 @@ impl TileMap {
                     .insert(Parent(parent))
                     .insert(Name::new(format!("Tile [{x}, {y}]")))
                     .insert(Tile { x, y })
+                    .insert(tile)
                     .with_children(|p| {
                         p.spawn_scene(model);
                     })
@@ -203,7 +204,14 @@ impl TileMap {
         }
     }
 
-    fn calculate_tile_pos(&self, x: i32, y: i32) -> Vec3 {
+    pub fn get_tile_entity_at_coord(&self, coord: Coordinate) -> Entity {
+        let idx = self
+            .coord_to_idx(coord.x, coord.y)
+            .expect("Attempted to get an invalid tile from a map.");
+        self.tiles[idx]
+    }
+
+    pub fn calculate_tile_pos(&self, x: i32, y: i32) -> Vec3 {
         Vec3::new(
             x as f32 - (self.width as f32) * 0.5,
             0.0,

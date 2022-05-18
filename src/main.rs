@@ -4,6 +4,7 @@ mod input;
 mod messages;
 mod raycast;
 mod tilemap;
+mod towers;
 
 #[cfg(feature = "debug")]
 mod debug;
@@ -15,6 +16,7 @@ mod prelude {
     pub use crate::messages::*;
     pub use crate::raycast::*;
     pub use crate::tilemap::*;
+    pub use crate::towers::*;
     pub use bevy::prelude::*;
     pub use bevy_mod_raycast::{RayCastMesh, RayCastSource};
     pub use iyes_loopless::prelude::*;
@@ -66,6 +68,7 @@ fn main() {
     app.add_plugin(PickablePlugin)
         .add_plugin(InputPlugin)
         .add_plugin(MessagePlugin)
+        .add_plugin(TowerPlugin)
         .add_startup_system(setup)
         .add_startup_system(respawn_tilemap)
         .add_system_to_stage(CoreStage::PreUpdate, respawn_tilemap.run_if(respawn_pushed))
