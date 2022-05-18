@@ -1,3 +1,4 @@
+mod coordinate;
 mod enemy;
 mod input;
 mod messages;
@@ -8,6 +9,7 @@ mod tilemap;
 mod debug;
 
 mod prelude {
+    pub use crate::coordinate::*;
     pub use crate::enemy::*;
     pub use crate::input::*;
     pub use crate::messages::*;
@@ -51,21 +53,23 @@ fn main() {
         "fixed_stages",
         FixedTimestepStage::new(std::time::Duration::from_millis(16)).with_stage(fixed_stage),
     )
-    .add_plugins(DefaultPlugins)
-    .add_plugin(PickablePlugin)
-    .add_plugin(InputPlugin)
-    .add_startup_system(setup)
-    .add_startup_system(respawn_tilemap)
-    .add_system_to_stage(CoreStage::PreUpdate, respawn_tilemap.run_if(respawn_pushed))
-    .add_system(initialize_tilemap)
-    .add_system(set_light_direction)
-    .add_system(spawn_enemies)
-    .add_system(update_track_followers);
+    .add_plugins(DefaultPlugins);
 
     #[cfg(feature = "debug")]
     {
         app.add_plugin(debug::TKDebugPlugin);
     }
+
+    app.add_plugin(PickablePlugin)
+        .add_plugin(InputPlugin)
+        .add_plugin(MessagePlugin)
+        .add_startup_system(setup)
+        .add_startup_system(respawn_tilemap)
+        .add_system_to_stage(CoreStage::PreUpdate, respawn_tilemap.run_if(respawn_pushed))
+        .add_system(initialize_tilemap)
+        .add_system(set_light_direction)
+        .add_system(spawn_enemies)
+        .add_system(update_track_followers);
 
     app.run();
 }

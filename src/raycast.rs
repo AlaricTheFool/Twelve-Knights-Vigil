@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use bevy_mod_raycast::{DefaultPluginState, DefaultRaycastingPlugin, Intersection, RayCastMethod};
+use bevy_mod_raycast::{DefaultPluginState, DefaultRaycastingPlugin, RayCastMethod};
 
 pub struct PickableRaycastSet;
 
@@ -9,6 +9,7 @@ impl Plugin for PickablePlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(DefaultRaycastingPlugin::<PickableRaycastSet>::default())
             .insert_resource(DefaultPluginState::<PickableRaycastSet>::default())
+            .insert_resource(CursorState::NoTarget)
             .add_system(add_raycast_components_to_tile_meshes)
             .add_system(update_cursor_state)
             .add_system(update_raycast_with_cursor);
@@ -22,6 +23,12 @@ impl Plugin for PickablePlugin {
 
 #[derive(Component)]
 struct RootEntity(Entity);
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum CursorState {
+    NoTarget,
+    OnTile(Coordinate),
+}
 
 pub fn update_raycast_with_cursor(
     mut cursor: EventReader<CursorMoved>,
@@ -84,17 +91,20 @@ fn update_cursor_state(
     source_query: Query<&RayCastSource<PickableRaycastSet>>,
     root_query: Query<&RootEntity>,
     tile_query: Query<&Tile>,
+    mut cursor_state: ResMut<CursorState>,
 ) {
+    *cursor_state = CursorState::NoTarget;
     let source = source_query.single();
 
     if let Some((entity, _)) = source.intersect_top() {
-        let root_entity = root_query
-            .get(entity)
-            .expect("There is a pickable tile with no root entity!");
-        let tile = tile_query
-            .get(root_entity.0)
-            .expect("There is a tile root entity without a tile component.");
-
-        eprintln!("Tile Hovered: [{}, {}]", tile.x, tile.y);
+        if let Ok(root_entity) = root_query.get(entity) {
+            if let Ok(tile) = tile_query.get(root_entity.0) {
+                //eprintln!("Tile Hovered: [{}, {}]", tile.x, tile.y);
+                *cursor_state = CursorState::OnTile(Coordinate {
+                    x: tile.x,
+                    y: tile.y,
+                });
+            }
+        }
     }
 }

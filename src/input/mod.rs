@@ -5,7 +5,8 @@ pub struct InputPlugin;
 impl Plugin for InputPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(MapControl::new())
-            .add_system(update_map_rotation_dir);
+            .add_system(update_map_rotation_dir)
+            .add_system(send_build_tower_messages);
     }
 }
 
@@ -28,4 +29,23 @@ fn update_map_rotation_dir(keys: Res<Input<KeyCode>>, mut map_control: ResMut<Ma
         (false, true) => 1.0,
         _ => 0.0,
     };
+}
+
+fn send_build_tower_messages(
+    mouse_btn: Res<Input<MouseButton>>,
+    cursor_state: Res<CursorState>,
+    mut commands: Commands,
+) {
+    match *cursor_state {
+        CursorState::OnTile(coord) => {
+            if mouse_btn.just_pressed(MouseButton::Left) {
+                eprintln!("Do the thing! {coord:?}");
+                commands
+                    .spawn()
+                    .insert(Message)
+                    .insert(BuildTower { location: coord });
+            }
+        }
+        _ => {}
+    }
 }
