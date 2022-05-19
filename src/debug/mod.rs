@@ -25,7 +25,7 @@ fn initialize_debug_models(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    let mut debug_material: StandardMaterial = Color::rgba(0.7, 0.3, 0.3, 0.5).into();
+    let mut debug_material: StandardMaterial = Color::rgba(0.7, 0.3, 0.3, 0.2).into();
     debug_material.alpha_mode = bevy::pbr::AlphaMode::Blend;
     commands.insert_resource(DebugModels {
         vertical_marker_mesh: meshes.add(Mesh::from(shape::Box::new(

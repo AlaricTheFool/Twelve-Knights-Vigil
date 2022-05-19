@@ -1,11 +1,16 @@
 use crate::prelude::*;
 
+mod cooldown;
+
 pub struct TowerPlugin;
+pub use self::cooldown::{spawn_cd_reset_message, Cooldown};
 
 impl Plugin for TowerPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(initialize_tower_models)
-            .add_system(detect_targets_in_range);
+            .add_plugin(cooldown::CDPlugin)
+            .add_system(detect_targets_in_range)
+            .add_system_to_stage(CoreStage::Last, fire_weapons);
 
         #[cfg(feature = "debug")]
         {
@@ -22,6 +27,15 @@ pub struct TowerModels {
 pub struct Range {
     pub max_range: f32,
 }
+
+impl Range {
+    pub fn calculate_adjusted_range(&self) -> f32 {
+        self.max_range + 0.5
+    }
+}
+
+#[derive(Component)]
+pub struct Weapon;
 
 #[derive(Component)]
 pub struct ValidTargets {
@@ -49,12 +63,19 @@ pub fn spawn_tower(
         .insert(Name::new(format!("Tower [{}, {}]", coord.x, coord.y)))
         .insert(Parent(map_entity))
         .insert(Range { max_range: 1.0 })
+        .insert(Weapon)
+        .insert(Cooldown::new(0.5))
         .insert_bundle(TransformBundle::from_transform(
-            Transform::from_translation(map.calculate_tile_pos(coord.x, coord.y))
-                .with_scale(Vec3::ONE * 0.5),
+            Transform::from_translation(map.calculate_tile_pos(coord.x, coord.y)),
         ))
         .with_children(|p| {
-            p.spawn_scene(models.base.clone());
+            p.spawn()
+                .insert_bundle(TransformBundle::from_transform(
+                    Transform::identity().with_scale(Vec3::ONE * 0.5),
+                ))
+                .with_children(|p| {
+                    p.spawn_scene(models.base.clone());
+                });
         });
 }
 
@@ -73,15 +94,11 @@ fn detect_targets_in_range(
                         .translation
                         .flatten()
                         .distance(e_transform.translation.flatten())
-                        <= range.max_range
+                        <= range.calculate_adjusted_range()
                 })
                 .map(|(e_entity, _, _)| e_entity)
                 .collect();
 
-            let valid_target_count = enemies_in_range.len();
-            if valid_target_count > 0 {
-                eprintln!("{valid_target_count}");
-            }
             commands.entity(r_entity).insert(ValidTargets {
                 valid_targets: enemies_in_range,
             });
@@ -101,21 +118,44 @@ impl Flatten for Vec3 {
     }
 }
 
+#[cfg(feature = "debug")]
 fn add_debug_range_spheres(
     query: Query<(Entity, &Range), Added<Range>>,
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
+    debug_models: Res<crate::debug::DebugModels>,
 ) {
     query.iter().for_each(|(entity, range)| {
         commands.entity(entity).with_children(|p| {
             p.spawn().insert_bundle(PbrBundle {
                 mesh: meshes.add(Mesh::from(shape::UVSphere {
-                    radius: range.max_range,
+                    radius: range.calculate_adjusted_range(),
                     sectors: 16,
                     stacks: 16,
                 })),
+                material: debug_models.debug_material.clone(),
                 ..default()
             });
         });
+    });
+}
+
+fn fire_weapons(
+    mut query: Query<(Entity, &Weapon, &Cooldown, &ValidTargets)>,
+    mut track_follower_query: Query<(Entity, &TrackFollower)>,
+    mut commands: Commands,
+) {
+    query.iter_mut().for_each(|(entity, _, cd, targets)| {
+        if targets.valid_targets.len() > 0 && cd.is_ready() {
+            let mut target = track_follower_query
+                .iter()
+                .filter(|(e, _)| targets.valid_targets.contains(e))
+                .collect::<Vec<(Entity, &TrackFollower)>>();
+
+            target.sort_by(|b, a| a.1.progress.partial_cmp(&b.1.progress).unwrap());
+
+            commands.entity(target[0].0).despawn_recursive();
+            spawn_cd_reset_message(entity, &mut commands);
+        }
     });
 }

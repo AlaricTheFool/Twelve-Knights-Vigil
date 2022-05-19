@@ -101,7 +101,7 @@ fn setup(mut commands: Commands, assets: Res<AssetServer>) {
 
     commands.insert_resource(enemy_models);
 
-    commands.insert_resource(SpawnTimer(Timer::from_seconds(1.0, true)));
+    commands.insert_resource(SpawnTimer(Timer::from_seconds(0.1, true)));
 
     commands
         .spawn_bundle(PerspectiveCameraBundle {

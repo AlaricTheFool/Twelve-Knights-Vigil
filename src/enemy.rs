@@ -12,7 +12,7 @@ pub struct Enemy;
 #[derive(Component)]
 pub struct TrackFollower {
     track: Entity,
-    progress: f32,
+    pub progress: f32,
     speed: f32,
 }
 
