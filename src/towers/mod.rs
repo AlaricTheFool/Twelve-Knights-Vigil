@@ -1,9 +1,11 @@
 use crate::prelude::*;
 
 mod cooldown;
+mod weapons;
 
 pub struct TowerPlugin;
 pub use self::cooldown::{spawn_cd_reset_message, Cooldown};
+use self::weapons::*;
 
 impl Plugin for TowerPlugin {
     fn build(&self, app: &mut App) {
@@ -14,13 +16,14 @@ impl Plugin for TowerPlugin {
 
         #[cfg(feature = "debug")]
         {
-            app.add_system(add_debug_range_spheres);
+            //app.add_system(add_debug_range_spheres);
         }
     }
 }
 
 pub struct TowerModels {
     base: Handle<Scene>,
+    ballista: Handle<Scene>,
 }
 
 #[derive(Component)]
@@ -45,6 +48,7 @@ pub struct ValidTargets {
 fn initialize_tower_models(assets: Res<AssetServer>, mut commands: Commands) {
     let tower_models = TowerModels {
         base: assets.load("models/towers/towerSquare_sampleA.glb#Scene0"),
+        ballista: assets.load("models/towers/weapons/weapon_ballista.glb#Scene0"),
     };
 
     commands.insert_resource(tower_models);
@@ -75,6 +79,16 @@ pub fn spawn_tower(
                 ))
                 .with_children(|p| {
                     p.spawn_scene(models.base.clone());
+                });
+        })
+        .with_children(|p| {
+            p.spawn()
+                .insert_bundle(TransformBundle::from_transform(
+                    Transform::from_translation(Vec3::new(0.0, 0.7, 0.0)),
+                ))
+                .insert(WeaponPivot)
+                .with_children(|p| {
+                    p.spawn_scene(models.ballista.clone());
                 });
         });
 }
@@ -111,10 +125,10 @@ trait Flatten {
 }
 
 impl Flatten for Vec3 {
-    type Output = Self;
+    type Output = Vec2;
 
     fn flatten(&self) -> Self::Output {
-        *self * Vec3::new(1.0, 0.0, 1.0)
+        Vec2::new(self.x, self.z)
     }
 }
 
@@ -142,20 +156,41 @@ fn add_debug_range_spheres(
 
 fn fire_weapons(
     mut query: Query<(Entity, &Weapon, &Cooldown, &ValidTargets)>,
-    mut track_follower_query: Query<(Entity, &TrackFollower)>,
+    mut track_follower_query: Query<(Entity, &TrackFollower, &Transform)>,
+    mut pivot_query: Query<(Entity, &Transform, &GlobalTransform, &WeaponPivot, &Parent)>,
     mut commands: Commands,
 ) {
     query.iter_mut().for_each(|(entity, _, cd, targets)| {
         if targets.valid_targets.len() > 0 && cd.is_ready() {
             let mut target = track_follower_query
                 .iter()
-                .filter(|(e, _)| targets.valid_targets.contains(e))
-                .collect::<Vec<(Entity, &TrackFollower)>>();
+                .filter(|(e, _, _)| targets.valid_targets.contains(e))
+                .collect::<Vec<(Entity, &TrackFollower, &Transform)>>();
 
             target.sort_by(|b, a| a.1.progress.partial_cmp(&b.1.progress).unwrap());
+
+            pivot_query
+                .iter()
+                .filter(|(_, _, _, _, parent)| parent.0 == entity)
+                .for_each(|(pivot_entity, transform, g_transform, _, _)| {
+                    let target_pos = target[0].2.translation.flatten();
+                    let angle = calculate_point_at_angle(g_transform.translation.flatten(), target_pos);
+                        
+                    let rotation = Quat::from_euler(EulerRot::XYZ, 0.0, angle, 0.0);
+                    let modified_transform = transform.with_rotation(rotation);
+                    eprintln!("Angle is {angle:?} and Rotation is {rotation:?} and transform is {modified_transform:?}");
+                    commands
+                        .entity(pivot_entity)
+                        .insert_bundle(TransformBundle::from_transform(Transform::from(modified_transform)));
+                });
 
             commands.entity(target[0].0).despawn_recursive();
             spawn_cd_reset_message(entity, &mut commands);
         }
     });
+}
+
+fn calculate_point_at_angle(source: Vec2, target: Vec2) -> f32 {
+    eprintln!("The source is {source} and it's pointing at {target}");
+    source.angle_between(target) - std::f32::consts::FRAC_PI_2
 }

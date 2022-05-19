@@ -2,4 +2,8 @@
 [ ] Highlight Tiles
 [ ] Tower UI
 [X] Place Towers
-[ ] Make towers shoot
+[X] Make towers shoot
+
+[ ] Animations and Projectiles
+
+[ ] BUG: Turret rotation is relative to global rotation so it changes based on map angle.
