@@ -52,6 +52,14 @@ impl TileMap {
         commands: &mut Commands,
         models: &TileModels,
     ) {
+        let mut tile_parent = parent;
+        commands.entity(parent).with_children(|p| {
+            tile_parent = p
+                .spawn()
+                .insert_bundle(TransformBundle::identity())
+                .insert(Name::new("Tiles"))
+                .id();
+        });
         let (tile_data, path_points) = self.generate_random_map_layout();
         (0..self.height).for_each(|y| {
             (0..self.width).for_each(|x| {
@@ -75,7 +83,7 @@ impl TileMap {
                         rotation: Quat::from_euler(EulerRot::XYZ, 0.0, rotation, 0.0),
                         ..default()
                     }))
-                    .insert(Parent(parent))
+                    .insert(Parent(tile_parent))
                     .insert(Name::new(format!("Tile [{x}, {y}]")))
                     .insert(Tile { x, y })
                     .insert(tile)
