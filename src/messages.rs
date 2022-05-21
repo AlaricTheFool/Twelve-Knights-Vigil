@@ -21,9 +21,10 @@ pub struct Message;
 pub struct IsHandled;
 
 #[derive(Component)]
-pub struct Target {
-    pub target: Entity,
-}
+pub struct Target(pub Entity);
+
+#[derive(Component)]
+pub struct Sender(pub Entity);
 
 #[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
 #[derive(Component)]
@@ -41,7 +42,7 @@ fn handle_build_tower_messages(
     msg_query
         .iter()
         .for_each(|(entity, _, build_tower, target_map)| {
-            if let Ok((map_entity, map)) = map_query.get(target_map.target) {
+            if let Ok((map_entity, map)) = map_query.get(target_map.0) {
                 let tile_entity = map.get_tile_entity_at_coord(build_tower.location);
                 if let Ok(tile_type) = tile_query.get(tile_entity) {
                     if *tile_type == TileType::Empty {

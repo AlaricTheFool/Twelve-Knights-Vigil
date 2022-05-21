@@ -71,7 +71,7 @@ fn handle_cooldown_refresh_messages(
     message_query
         .iter()
         .for_each(|(message_entity, _, target, _)| {
-            if let Ok(mut cd_to_reset) = cooldowns.get_mut(target.target) {
+            if let Ok(mut cd_to_reset) = cooldowns.get_mut(target.0) {
                 cd_to_reset.refill();
             }
 
@@ -83,6 +83,6 @@ pub fn spawn_cd_reset_message(target: Entity, commands: &mut Commands) {
     commands
         .spawn()
         .insert(Message)
-        .insert(Target { target })
+        .insert(Target(target))
         .insert(ResetCooldown);
 }

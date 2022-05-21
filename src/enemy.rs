@@ -16,6 +16,9 @@ pub struct TrackFollower {
     speed: f32,
 }
 
+#[derive(Component)]
+pub struct CenterOfMass(pub Vec3);
+
 pub fn spawn_enemies(
     models: Res<EnemyModels>,
     mut timer: ResMut<SpawnTimer>,
@@ -34,6 +37,7 @@ pub fn spawn_enemies(
                 speed: 0.05,
             })
             .insert(Parent(map.0.unwrap()))
+            .insert(CenterOfMass(Vec3::Y * 0.5))
             .with_children(|p| {
                 p.spawn_bundle(TransformBundle {
                     local: Transform::from_xyz(0.0, 0.4, 0.0).with_scale(Vec3::new(0.5, 0.5, 0.5)),

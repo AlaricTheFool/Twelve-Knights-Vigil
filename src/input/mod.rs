@@ -44,9 +44,7 @@ fn send_build_tower_messages(
                     .spawn()
                     .insert(Message)
                     .insert(BuildTower { location: coord })
-                    .insert(Target {
-                        target: current_map.0.unwrap(),
-                    });
+                    .insert(Target(current_map.0.unwrap()));
             }
         }
         _ => {}
