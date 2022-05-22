@@ -77,7 +77,7 @@ pub fn spawn_tower(
         .spawn()
         .insert(Name::new(format!("Tower [{}, {}]", coord.x, coord.y)))
         .insert(Parent(map_entity))
-        .insert(Range { max_range: 1.0 })
+        .insert(Range { max_range: 2.0 })
         .insert(Weapon)
         .insert(Cooldown::new(0.5))
         .insert(ProjectileSpawnPoint(Vec3::Y * 0.7))
@@ -112,20 +112,17 @@ pub fn spawn_tower(
 }
 
 fn detect_targets_in_range(
-    range_query: Query<(Entity, &Transform, &Range)>,
-    enemy_query: Query<(Entity, &Enemy, &Transform)>,
+    range_query: Query<(Entity, &GlobalTransform, &Range, &Name)>,
+    enemy_query: Query<(Entity, &Enemy, &GlobalTransform)>,
     mut commands: Commands,
 ) {
     range_query
         .iter()
-        .for_each(|(r_entity, r_transform, range)| {
+        .for_each(|(r_entity, r_transform, range, name)| {
             let enemies_in_range: Vec<Entity> = enemy_query
                 .iter()
                 .filter(|(_, _, e_transform)| {
-                    r_transform
-                        .translation
-                        .flatten()
-                        .distance(e_transform.translation.flatten())
+                    r_transform.translation.distance(e_transform.translation)
                         <= range.calculate_adjusted_range()
                 })
                 .map(|(e_entity, _, _)| e_entity)
