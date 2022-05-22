@@ -117,6 +117,9 @@ fn move_projectiles(
 
                     // TODO: Make this into a message instead.
                     commands.entity(target.0).despawn_recursive();
+
+                    let gold_gained = thread_rng().gen_range(5..15);
+                    crate::td_mode::gold::send_change_gold_message(&mut commands, gold_gained);
                 } else {
                     // Move towards the projectile's target.
                     commands.entity(entity).insert(new_transform);

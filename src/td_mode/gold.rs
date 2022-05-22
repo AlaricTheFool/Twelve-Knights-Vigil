@@ -48,7 +48,7 @@ fn change_gold(
 ) {
     query.iter().for_each(|(e, _, change)| {
         gold.0 += change.0;
-        gold.0 = gold.0.min(0);
+        gold.0 = gold.0.max(0);
         commands.entity(e).insert(IsHandled);
     });
 }

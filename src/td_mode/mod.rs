@@ -2,10 +2,10 @@ use crate::prelude::*;
 
 //TODO: This shouldn't need to be public.
 pub mod enemy;
+pub mod gold;
 pub mod raycast;
 pub mod tower_building;
 
-mod gold;
 mod life;
 mod ui;
 
