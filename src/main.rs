@@ -1,6 +1,8 @@
 mod coordinate;
 mod enemy;
+mod gamemode;
 mod input;
+mod main_menu;
 mod messages;
 mod raycast;
 mod tilemap;
@@ -12,12 +14,15 @@ mod debug;
 mod prelude {
     pub use crate::coordinate::*;
     pub use crate::enemy::*;
+    pub use crate::gamemode::*;
     pub use crate::input::*;
+    pub use crate::main_menu::*;
     pub use crate::messages::*;
     pub use crate::raycast::*;
     pub use crate::tilemap::*;
     pub use crate::towers::*;
     pub use bevy::prelude::*;
+    pub use bevy_egui::{egui, EguiContext, EguiPlugin};
     pub use bevy_mod_raycast::{RayCastMesh, RayCastSource};
     pub use iyes_loopless::prelude::*;
     pub use rand::*;
@@ -38,16 +43,22 @@ fn main() {
         title: "Twelve Knight's Vigil".to_string(),
         width: 1280.0,
         height: 720.0,
-        present_mode: bevy::window::PresentMode::Immediate,
+        present_mode: bevy::window::PresentMode::Mailbox,
         ..default()
     })
+    .add_loopless_state(GameMode::MainMenu)
+    .add_plugins(DefaultPlugins);
+
+    /*
     .insert_resource(ClearColor(Color::rgb(0.5, 0.5, 0.9)))
     .insert_resource(AmbientLight {
         color: Color::WHITE,
         brightness: 1.0 / 5.0f32,
     })
     .insert_resource(CurrentMap(None));
+        */
 
+    /*
     let mut fixed_stage = SystemStage::parallel();
     fixed_stage
         .add_system(move_track_followers)
@@ -58,13 +69,15 @@ fn main() {
         "fixed_stages",
         FixedTimestepStage::new(std::time::Duration::from_millis(16)).with_stage(fixed_stage),
     )
-    .add_plugins(DefaultPlugins);
+    */
 
     #[cfg(feature = "debug")]
     {
-        app.add_plugin(debug::TKDebugPlugin);
+        //        app.add_plugin(debug::TKDebugPlugin);
     }
 
+    app.add_plugin(MainMenuPlugin);
+    /*
     app.add_plugin(PickablePlugin)
         .add_plugin(InputPlugin)
         .add_plugin(MessagePlugin)
@@ -76,6 +89,7 @@ fn main() {
         .add_system(set_light_direction)
         .add_system(spawn_enemies)
         .add_system(update_track_followers);
+    */
 
     app.run();
 }

@@ -12,3 +12,5 @@
 [ ] Will you create a discord bot for the game where it can post an image in a channel of the current board every 5 seconds and people can use a command with raw position values to place towers?
 
 [ ] Potentially make projectiles fly off into the distance when their target is gone.
+
+[ ] BUGFIX: Sort out the conflict with egui and inspector egui. And make a note of how to fix in the future.
