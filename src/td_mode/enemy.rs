@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use super::*;
 
 pub struct SpawnTimer(pub Timer);
 
@@ -72,6 +72,7 @@ pub fn update_track_followers(
 
             commands.entity(entity).insert(new_transform);
         } else {
+            life::send_change_lives_message(&mut commands, -1);
             commands.entity(entity).despawn_recursive();
         }
     }

@@ -8,16 +8,28 @@ pub struct TowerPlugin;
 pub use self::cooldown::{spawn_cd_reset_message, Cooldown};
 use self::projectiles::*;
 use self::{projectiles::spawn_projectile_message, weapons::*};
+use crate::td_mode::enemy::*;
 
 impl Plugin for TowerPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(initialize_tower_models)
             .add_plugin(cooldown::CDPlugin)
             .add_plugin(projectiles::ProjectilePlugin)
-            .add_system(detect_targets_in_range.label("detect_target"))
-            .add_system(update_current_target.after("detect_target"))
-            .add_system(point_weapons_at_targets)
-            .add_system_to_stage(CoreStage::PostUpdate, damage_targeted_enemy);
+            .add_system(
+                detect_targets_in_range
+                    .run_in_state(GameMode::TDMode)
+                    .label("detect_target"),
+            )
+            .add_system(
+                update_current_target
+                    .run_in_state(GameMode::TDMode)
+                    .after("detect_target"),
+            )
+            .add_system(point_weapons_at_targets.run_in_state(GameMode::TDMode))
+            .add_system_to_stage(
+                CoreStage::PostUpdate,
+                damage_targeted_enemy.run_in_state(GameMode::TDMode),
+            );
 
         #[cfg(feature = "debug")]
         {

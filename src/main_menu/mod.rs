@@ -7,8 +7,7 @@ pub struct MainMenuPlugin;
 
 impl Plugin for MainMenuPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(EguiPlugin)
-            .add_enter_system(GameMode::MainMenu, setup_main_menu)
+        app.add_enter_system(GameMode::MainMenu, setup_main_menu)
             .add_system(main_menu_ui.run_in_state(GameMode::MainMenu));
     }
 }

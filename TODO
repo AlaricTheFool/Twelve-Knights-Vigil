@@ -14,3 +14,5 @@
 [ ] Potentially make projectiles fly off into the distance when their target is gone.
 
 [ ] BUGFIX: Sort out the conflict with egui and inspector egui. And make a note of how to fix in the future.
+
+[ ] POTENTIAL BUG: Tile global transform not updated until movement.

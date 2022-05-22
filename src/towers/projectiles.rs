@@ -2,6 +2,8 @@ use crate::prelude::*;
 
 pub struct ProjectilePlugin;
 
+use crate::td_mode::enemy::CenterOfMass;
+
 impl Plugin for ProjectilePlugin {
     fn build(&self, app: &mut App) {
         let mut fixed_stage = SystemStage::parallel();

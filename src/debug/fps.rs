@@ -39,7 +39,6 @@ impl Plugin for FPSTrackerPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(FrameTimeBuffer::new(FRAME_BUFFER_SIZE))
             .add_system(record_frame_time)
-            .add_plugin(EguiPlugin)
             .add_system(draw_debug_fps_ui);
     }
 }

@@ -10,9 +10,9 @@ impl Plugin for PickablePlugin {
         app.add_plugin(DefaultRaycastingPlugin::<PickableRaycastSet>::default())
             .insert_resource(DefaultPluginState::<PickableRaycastSet>::default())
             .insert_resource(CursorState::NoTarget)
-            .add_system(add_raycast_components_to_tile_meshes)
-            .add_system(update_cursor_state)
-            .add_system(update_raycast_with_cursor);
+            .add_system(add_raycast_components_to_tile_meshes.run_in_state(GameMode::TDMode))
+            .add_system(update_cursor_state.run_in_state(GameMode::TDMode))
+            .add_system(update_raycast_with_cursor.run_in_state(GameMode::TDMode));
 
         #[cfg(feature = "debug")]
         app.insert_resource(
@@ -23,12 +23,6 @@ impl Plugin for PickablePlugin {
 
 #[derive(Component)]
 struct RootEntity(Entity);
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub enum CursorState {
-    NoTarget,
-    OnTile(Coordinate),
-}
 
 pub fn update_raycast_with_cursor(
     mut cursor: EventReader<CursorMoved>,

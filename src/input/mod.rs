@@ -1,12 +1,14 @@
 use crate::prelude::*;
+use crate::td_mode::tower_building::*;
 
 pub struct InputPlugin;
 
 impl Plugin for InputPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(MapControl::new())
-            .add_system(update_map_rotation_dir)
-            .add_system(send_build_tower_messages);
+        app.insert_resource(CursorState::NoTarget)
+            .insert_resource(MapControl::new())
+            .add_system(update_map_rotation_dir.run_in_state(GameMode::TDMode))
+            .add_system(send_build_tower_messages.run_in_state(GameMode::TDMode));
     }
 }
 
@@ -19,6 +21,12 @@ impl MapControl {
     fn new() -> Self {
         Self { rotation_dir: 0.0 }
     }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum CursorState {
+    NoTarget,
+    OnTile(Coordinate),
 }
 
 fn update_map_rotation_dir(keys: Res<Input<KeyCode>>, mut map_control: ResMut<MapControl>) {
