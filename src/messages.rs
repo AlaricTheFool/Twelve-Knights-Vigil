@@ -20,8 +20,18 @@ pub struct Target(pub Entity);
 #[derive(Component)]
 pub struct Sender(pub Entity);
 
+#[derive(Component)]
+pub struct SystemAlert(pub String);
+
 fn clear_handled_messages(query: Query<(Entity, &Message, &IsHandled)>, mut commands: Commands) {
     query.iter().for_each(|(entity, _, _)| {
         commands.entity(entity).despawn_recursive();
     });
+}
+
+pub fn create_system_alert_message(commands: &mut Commands, message: &str) {
+    commands
+        .spawn()
+        .insert(Message)
+        .insert(SystemAlert(message.to_string()));
 }
