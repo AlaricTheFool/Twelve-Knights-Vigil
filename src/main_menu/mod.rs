@@ -23,20 +23,24 @@ fn main_menu_ui(
 ) {
     egui::CentralPanel::default()
         .frame(egui::Frame::none())
-        .show(egui_context.ctx_mut(), |mut ui| {
-            ui.heading(
-                egui::RichText::new("12 Knight's Vigil")
-                    .size(FONT_SIZE)
-                    .color(egui::Color32::BLACK),
-            );
+        .show(egui_context.ctx_mut(), |ui| {
+            ui.vertical_centered(|mut ui| {
+                ui.add_space(96.0);
+                ui.heading(
+                    egui::RichText::new("12 Knight's Vigil")
+                        .size(FONT_SIZE)
+                        .color(egui::Color32::BLACK),
+                );
 
-            if menu_button(&mut ui, "Play").clicked() {
-                commands.insert_resource(NextState(GameMode::TDMode));
-            }
+                ui.add_space(128.0);
+                if menu_button(&mut ui, "Play").clicked() {
+                    commands.insert_resource(NextState(GameMode::TDMode));
+                }
 
-            if menu_button(&mut ui, "Quit").clicked() {
-                exit.send(AppExit);
-            }
+                if menu_button(&mut ui, "Quit").clicked() {
+                    exit.send(AppExit);
+                }
+            });
         });
 }
 
