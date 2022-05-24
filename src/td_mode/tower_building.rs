@@ -13,6 +13,7 @@ pub fn handle_build_tower_messages(
     map_query: Query<(Entity, &TileMap)>,
     tile_query: Query<&TileType>,
     mut commands: Commands,
+    mut alerts: ResMut<SystemAlerts>,
     models: Res<TowerModels>,
     gold: Res<gold::Gold>,
 ) {
@@ -37,9 +38,9 @@ pub fn handle_build_tower_messages(
                             gold::send_change_gold_message(&mut commands, -TOWER_COST);
                         }
                         (true, false) => {
-                            create_system_alert_message(&mut commands, "Not enough gold.")
+                            create_system_alert_message(&mut alerts, "Not enough gold.")
                         }
-                        _ => create_system_alert_message(&mut commands, "Invalid Location"),
+                        _ => create_system_alert_message(&mut alerts, "Invalid Location"),
                     }
                 }
             }

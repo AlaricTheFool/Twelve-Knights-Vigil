@@ -8,7 +8,8 @@ pub struct MessagePlugin;
 
 impl Plugin for MessagePlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_to_stage(CoreStage::Last, clear_handled_messages)
+        app.insert_resource(SystemAlerts::new())
+            .add_system_to_stage(CoreStage::Last, clear_handled_messages)
             .add_system(display_system_messages);
     }
 }
