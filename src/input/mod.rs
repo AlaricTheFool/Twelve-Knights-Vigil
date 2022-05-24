@@ -9,15 +9,16 @@ impl Plugin for InputPlugin {
             .insert_resource(UIAction::None)
             .insert_resource(MapControl::new())
             .add_system(update_map_rotation_dir.run_in_state(GameMode::TDMode))
-            .add_system(reset_ui_action)
+            .add_system_to_stage(CoreStage::Last, reset_ui_action)
             .add_system(send_build_tower_messages.run_in_state(GameMode::TDMode));
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum UIAction {
     None,
     BuildTower(TowerType),
+    PlaceKnight(Knight),
 }
 
 pub struct MapControl {

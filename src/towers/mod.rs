@@ -38,7 +38,7 @@ impl Plugin for TowerPlugin {
     }
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum TowerType {
     Short,
     Medium,

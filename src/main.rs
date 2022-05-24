@@ -1,6 +1,7 @@
 mod coordinate;
 mod gamemode;
 mod input;
+mod knights;
 mod main_menu;
 mod messages;
 mod td_mode;
@@ -14,6 +15,7 @@ mod prelude {
     pub use crate::coordinate::*;
     pub use crate::gamemode::*;
     pub use crate::input::*;
+    pub use crate::knights::*;
     pub use crate::main_menu::*;
     pub use crate::messages::*;
     pub use crate::td_mode::*;
