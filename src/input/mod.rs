@@ -6,10 +6,18 @@ pub struct InputPlugin;
 impl Plugin for InputPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(CursorState::NoTarget)
+            .insert_resource(UIAction::None)
             .insert_resource(MapControl::new())
             .add_system(update_map_rotation_dir.run_in_state(GameMode::TDMode))
+            .add_system(reset_ui_action)
             .add_system(send_build_tower_messages.run_in_state(GameMode::TDMode));
     }
+}
+
+#[derive(Debug)]
+pub enum UIAction {
+    None,
+    BuildTower(TowerType),
 }
 
 pub struct MapControl {
@@ -42,19 +50,38 @@ fn update_map_rotation_dir(keys: Res<Input<KeyCode>>, mut map_control: ResMut<Ma
 fn send_build_tower_messages(
     mouse_btn: Res<Input<MouseButton>>,
     cursor_state: Res<CursorState>,
+    ui_action: Res<UIAction>,
     current_map: Res<CurrentMap>,
     mut commands: Commands,
 ) {
     match *cursor_state {
-        CursorState::OnTile(coord) => {
-            if mouse_btn.just_pressed(MouseButton::Left) && current_map.0.is_some() {
-                commands
-                    .spawn()
-                    .insert(Message)
-                    .insert(BuildTower { location: coord })
-                    .insert(Target(current_map.0.unwrap()));
+        CursorState::OnTile(coord) => match *ui_action {
+            UIAction::BuildTower(t_type) => {
+                if mouse_btn.just_released(MouseButton::Left) && current_map.0.is_some() {
+                    commands
+                        .spawn()
+                        .insert(Message)
+                        .insert(BuildTower {
+                            location: coord,
+                            t_type,
+                        })
+                        .insert(Target(current_map.0.unwrap()));
+                }
+            }
+            _ => {}
+        },
+        _ => {}
+    }
+}
+
+fn reset_ui_action(mut ui_action: ResMut<UIAction>, mouse_btn: Res<Input<MouseButton>>) {
+    match *ui_action {
+        UIAction::BuildTower(t_type) => {
+            if !mouse_btn.pressed(MouseButton::Left) {
+                *ui_action = UIAction::None
             }
         }
+
         _ => {}
     }
 }

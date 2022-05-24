@@ -38,9 +38,18 @@ impl Plugin for TowerPlugin {
     }
 }
 
+#[derive(Copy, Clone, Debug)]
+pub enum TowerType {
+    Short,
+    Medium,
+    Tall,
+}
+
 pub struct TowerModels {
     base: Handle<Scene>,
-    ballista: Handle<Scene>,
+    short: Handle<Scene>,
+    med: Handle<Scene>,
+    tall: Handle<Scene>,
 }
 
 #[derive(Component)]
@@ -71,7 +80,9 @@ pub struct ProjectileSpawnPoint(Vec3);
 fn initialize_tower_models(assets: Res<AssetServer>, mut commands: Commands) {
     let tower_models = TowerModels {
         base: assets.load("models/towers/towerSquare_sampleA.glb#Scene0"),
-        ballista: assets.load("models/towers/weapons/weapon_ballista.glb#Scene0"),
+        short: assets.load("models/towers/tower_short.glb#Scene0"),
+        med: assets.load("models/towers/tower_medium.glb#Scene0"),
+        tall: assets.load("models/towers/tower_tall.glb#Scene0"),
     };
 
     commands.insert_resource(tower_models);
@@ -83,6 +94,7 @@ pub fn spawn_tower(
     coord: Coordinate,
     commands: &mut Commands,
     models: &TowerModels,
+    t_type: TowerType,
 ) {
     eprintln!("Spawning tower at {coord:?}");
     let tower_entity = commands
@@ -99,10 +111,17 @@ pub fn spawn_tower(
         .with_children(|p| {
             p.spawn()
                 .insert_bundle(TransformBundle::from_transform(
-                    Transform::identity().with_scale(Vec3::ONE * 0.5),
+                    Transform::identity()
+                        .with_scale(Vec3::ONE * 0.5)
+                        .with_translation(Vec3::Y * 0.25),
                 ))
                 .with_children(|p| {
-                    p.spawn_scene(models.base.clone());
+                    let model = match t_type {
+                        TowerType::Short => models.short.clone(),
+                        TowerType::Medium => models.med.clone(),
+                        TowerType::Tall => models.tall.clone(),
+                    };
+                    p.spawn_scene(model);
                 });
         })
         .id();
@@ -113,9 +132,6 @@ pub fn spawn_tower(
         .insert_bundle(TransformBundle::from_transform(
             Transform::from_translation(Vec3::new(0.0, 0.7, 0.0)),
         ))
-        .with_children(|p| {
-            p.spawn_scene(models.ballista.clone());
-        })
         .id();
 
     commands

@@ -39,6 +39,7 @@ impl Plugin for TDModePlugin {
             .add_system(update_track_followers.run_in_state(GameMode::TDMode))
             .add_system(initialize_tilemap.run_in_state(GameMode::TDMode))
             .add_system(handle_build_tower_messages.run_in_state(GameMode::TDMode))
+            .add_system(draw_tower_build_ui.run_in_state(GameMode::TDMode))
             .add_system(handle_loss.run_in_state(GameMode::TDMode))
             .add_system(
                 return_to_menu
