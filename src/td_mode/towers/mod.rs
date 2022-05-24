@@ -103,10 +103,6 @@ pub fn spawn_tower(
         .spawn()
         .insert(Name::new(format!("Tower [{}, {}]", coord.x, coord.y)))
         .insert(Parent(map_entity))
-        .insert(Range { max_range: 2.0 })
-        .insert(Weapon)
-        .insert(Cooldown::new(0.5))
-        .insert(ProjectileSpawnPoint(Vec3::Y * 0.7))
         .insert_bundle(TransformBundle::from_transform(
             Transform::from_translation(map.calculate_tile_pos(coord.x, coord.y)),
         ))

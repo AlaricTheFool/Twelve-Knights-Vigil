@@ -30,9 +30,17 @@ pub fn send_reset_gold_message(commands: &mut Commands) {
     commands.spawn().insert(Message).insert(ResetGold);
 }
 
-fn reset_gold(query: Query<(Entity, &Message, &ResetGold)>, mut commands: Commands) {
+fn reset_gold(
+    query: Query<(Entity, &Message, &ResetGold)>,
+    mut commands: Commands,
+    cheats: Res<Cheats>,
+) {
     query.iter().for_each(|(e, _, _)| {
-        commands.insert_resource(Gold(STARTING_GOLD));
+        if cheats.infinite_money {
+            commands.insert_resource(Gold(999999));
+        } else {
+            commands.insert_resource(Gold(STARTING_GOLD));
+        }
         commands.entity(e).insert(IsHandled);
     });
 }
@@ -45,10 +53,13 @@ fn change_gold(
     mut gold: ResMut<Gold>,
     query: Query<(Entity, &Message, &ChangeGold)>,
     mut commands: Commands,
+    cheats: Res<Cheats>,
 ) {
     query.iter().for_each(|(e, _, change)| {
-        gold.0 += change.0;
-        gold.0 = gold.0.max(0);
+        if !cheats.infinite_money {
+            gold.0 += change.0;
+            gold.0 = gold.0.max(0);
+        }
         commands.entity(e).insert(IsHandled);
     });
 }

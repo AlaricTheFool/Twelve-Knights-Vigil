@@ -17,7 +17,7 @@ pub struct TDModePlugin;
 
 impl Plugin for TDModePlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(SpawnTimer(Timer::from_seconds(0.4, true)))
+        app.insert_resource(SpawnTimer(Timer::from_seconds(1.0, true)))
             .insert_resource(CurrentMap(None))
             .add_plugin(PickablePlugin)
             .add_plugin(TowerPlugin)

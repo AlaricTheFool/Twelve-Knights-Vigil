@@ -6,6 +6,8 @@ edition = "2021"
 [features]
 default = []
 debug = ["bevy-inspector-egui"]
+bulletproof = []
+screw_the_rules = []
 
 [dependencies]
 bevy = "0.7.0"

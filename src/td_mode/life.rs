@@ -33,9 +33,17 @@ pub fn send_reset_lives_message(commands: &mut Commands) {
     commands.spawn().insert(Message).insert(ResetLives);
 }
 
-fn reset_lives(query: Query<(Entity, &Message, &ResetLives)>, mut commands: Commands) {
+fn reset_lives(
+    query: Query<(Entity, &Message, &ResetLives)>,
+    mut commands: Commands,
+    cheats: Res<Cheats>,
+) {
     query.iter().for_each(|(e, _, _)| {
-        commands.insert_resource(Lives(STARTING_LIVES));
+        if cheats.infinite_lives {
+            commands.insert_resource(Lives(9999));
+        } else {
+            commands.insert_resource(Lives(STARTING_LIVES));
+        }
         commands.entity(e).insert(IsHandled);
     });
 }
@@ -48,10 +56,13 @@ fn change_lives(
     mut lives: ResMut<Lives>,
     query: Query<(Entity, &Message, &ChangeLives)>,
     mut commands: Commands,
+    cheats: Res<Cheats>,
 ) {
     query.iter().for_each(|(e, _, change)| {
-        lives.0 += change.0;
-        eprintln!("Lives are now at {}", lives.0);
+        if !cheats.infinite_lives {
+            lives.0 += change.0;
+            eprintln!("Lives are now at {}", lives.0);
+        }
         commands.entity(e).insert(IsHandled);
 
         if lives.0 <= 0 {

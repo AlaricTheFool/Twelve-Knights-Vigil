@@ -1,3 +1,4 @@
+mod cheats;
 mod coordinate;
 mod gamemode;
 mod input;
@@ -11,6 +12,7 @@ mod tilemap;
 mod debug;
 
 mod prelude {
+    pub use crate::cheats::*;
     pub use crate::coordinate::*;
     pub use crate::gamemode::*;
     pub use crate::input::*;
@@ -55,7 +57,9 @@ fn main() {
 
     app.add_plugin(MessagePlugin).add_plugin(InputPlugin);
 
-    app.add_plugin(TDModePlugin).add_plugin(MainMenuPlugin);
+    app.add_plugin(TDModePlugin)
+        .add_plugin(MainMenuPlugin)
+        .add_plugin(cheats::CheatPlugin);
 
     /*
     app.add_plugin(PickablePlugin)
