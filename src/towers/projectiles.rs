@@ -64,6 +64,7 @@ fn spawn_ballista_bolt(
     models: &Res<ProjectileModels>,
     target_entity: Entity,
     commands: &mut Commands,
+    parent: Entity,
 ) {
     commands
         .spawn()
@@ -73,6 +74,7 @@ fn spawn_ballista_bolt(
         .insert_bundle(TransformBundle::from_transform(
             Transform::from_translation(start_position),
         ))
+        .insert(Parent(parent))
         .with_children(|p| {
             p.spawn_scene(models.ballista_bolt.clone());
         });
@@ -80,15 +82,16 @@ fn spawn_ballista_bolt(
 
 fn handle_projectile_spawn_messages(
     message_query: Query<(Entity, &Message, &Sender, &Target, &SpawnProjectile)>,
-    spawn_point_query: Query<(&GlobalTransform, &ProjectileSpawnPoint)>,
+    spawn_point_query: Query<(&Transform, &ProjectileSpawnPoint)>,
     models: Res<ProjectileModels>,
+    current_map: Res<CurrentMap>,
     mut commands: Commands,
 ) {
     message_query
         .iter()
         .for_each(|(entity, _, sender, target, _)| {
             if let Ok((spawn_tform, spawn_point)) = spawn_point_query.get(sender.0) {
-                spawn_ballista_bolt(spawn_tform.translation + spawn_point.0, &models, target.0, &mut commands);
+                spawn_ballista_bolt(spawn_tform.translation + spawn_point.0, &models, target.0, &mut commands, current_map.0.unwrap());
             } else {
                 error!("Attempted to spawn a projectile from a source with no transform or spawn point.")
             }
@@ -98,7 +101,7 @@ fn handle_projectile_spawn_messages(
 
 fn move_projectiles(
     projectile_query: Query<(Entity, &Transform, &Projectile, &Speed, &Target)>,
-    transform_query: Query<(&GlobalTransform, &CenterOfMass)>,
+    transform_query: Query<(&Transform, &CenterOfMass)>,
     mut commands: Commands,
 ) {
     projectile_query

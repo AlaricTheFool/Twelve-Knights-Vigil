@@ -43,7 +43,7 @@ fn main() {
         title: "Twelve Knight's Vigil".to_string(),
         width: 1280.0,
         height: 720.0,
-        present_mode: bevy::window::PresentMode::Mailbox,
+        //        present_mode: bevy::window::PresentMode::Immediate,
         ..default()
     })
     .add_loopless_state(GameMode::MainMenu)
