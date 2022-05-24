@@ -1,5 +1,6 @@
-use crate::prelude::*;
+use super::*;
 
+mod building;
 mod cooldown;
 mod projectiles;
 mod weapons;
@@ -8,7 +9,7 @@ pub struct TowerPlugin;
 pub use self::cooldown::{spawn_cd_reset_message, Cooldown};
 use self::projectiles::*;
 use self::{projectiles::spawn_projectile_message, weapons::*};
-use crate::td_mode::enemy::*;
+pub use building::*;
 
 impl Plugin for TowerPlugin {
     fn build(&self, app: &mut App) {
@@ -26,6 +27,7 @@ impl Plugin for TowerPlugin {
                     .after("detect_target"),
             )
             .add_system(point_weapons_at_targets.run_in_state(GameMode::TDMode))
+            .add_system(handle_build_tower_messages.run_in_state(GameMode::TDMode))
             .add_system_to_stage(
                 CoreStage::PostUpdate,
                 damage_targeted_enemy.run_in_state(GameMode::TDMode),

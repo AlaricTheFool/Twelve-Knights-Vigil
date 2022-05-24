@@ -1,5 +1,4 @@
 use crate::prelude::*;
-use crate::td_mode::tower_building::*;
 
 pub struct InputPlugin;
 
@@ -62,6 +61,7 @@ fn send_build_tower_messages(
                     commands
                         .spawn()
                         .insert(Message)
+                        //TODO: This maybe doesn't belong imported here.
                         .insert(BuildTower {
                             location: coord,
                             t_type,

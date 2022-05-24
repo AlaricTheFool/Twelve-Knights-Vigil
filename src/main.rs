@@ -6,7 +6,6 @@ mod main_menu;
 mod messages;
 mod td_mode;
 mod tilemap;
-mod towers;
 
 #[cfg(feature = "debug")]
 mod debug;
@@ -20,7 +19,6 @@ mod prelude {
     pub use crate::messages::*;
     pub use crate::td_mode::*;
     pub use crate::tilemap::*;
-    pub use crate::towers::*;
     pub use bevy::prelude::*;
     pub use bevy_egui::{egui, EguiContext, EguiPlugin};
     pub use bevy_mod_raycast::{RayCastMesh, RayCastSource};

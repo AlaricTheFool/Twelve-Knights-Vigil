@@ -4,14 +4,14 @@ use crate::prelude::*;
 pub mod enemy;
 pub mod gold;
 pub mod raycast;
-pub mod tower_building;
 
 mod life;
+mod towers;
 mod ui;
 
 use enemy::*;
 use raycast::*;
-use tower_building::*;
+pub use towers::*;
 
 pub struct TDModePlugin;
 
@@ -39,7 +39,6 @@ impl Plugin for TDModePlugin {
             .add_system(spawn_enemies.run_in_state(GameMode::TDMode))
             .add_system(update_track_followers.run_in_state(GameMode::TDMode))
             .add_system(initialize_tilemap.run_in_state(GameMode::TDMode))
-            .add_system(handle_build_tower_messages.run_in_state(GameMode::TDMode))
             .add_system(handle_loss.run_in_state(GameMode::TDMode))
             .add_system(
                 return_to_menu

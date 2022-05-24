@@ -16,3 +16,11 @@
 [ ] BUGFIX: Sort out the conflict with egui and inspector egui. And make a note of how to fix in the future.
 
 [ ] POTENTIAL BUG: Tile global transform not updated until movement.
+
+
+HOW TO MAKE TOWERS AND KNIGHTS STEP BY STEP
+[ ] Step 1: Placing knight on tower applies list of components.
+[ ] Step 2: Components act out appropriate weapon behavior.
+[ ] Step 3: Clicking on Towers opens tower interface.
+[ ] Step 4: Upgrades in TOwer Interface apply additional list of components (Overwrite for improvements)
+[ ] Step 5: Tower interface contains minigames
