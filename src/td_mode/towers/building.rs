@@ -9,6 +9,12 @@ pub struct BuildTower {
     pub t_type: TowerType,
 }
 
+#[derive(Component)]
+pub struct PlaceKnight {
+    pub location: Coordinate,
+    pub knight: Knight,
+}
+
 pub fn draw_tower_build_ui(mut egui_context: ResMut<EguiContext>, mut ui_action: ResMut<UIAction>) {
     egui::TopBottomPanel::bottom("Tower Building").show(egui_context.ctx_mut(), |ui| {
         ui.horizontal(|ui| {
@@ -32,6 +38,7 @@ pub fn draw_tower_build_ui(mut egui_context: ResMut<EguiContext>, mut ui_action:
 pub fn handle_build_tower_messages(
     msg_query: Query<(Entity, &Message, &BuildTower, &Target)>,
     map_query: Query<(Entity, &TileMap)>,
+    tower_query: Query<(&Tower, &Coordinate)>,
     tile_query: Query<&TileType>,
     mut commands: Commands,
     mut alerts: ResMut<SystemAlerts>,
@@ -41,10 +48,17 @@ pub fn handle_build_tower_messages(
     msg_query
         .iter()
         .for_each(|(entity, _, build_tower, target_map)| {
+            // TODO: Use a Result enum to make all these checks and return a single error message
+            // on failure.
             if let Ok((map_entity, map)) = map_query.get(target_map.0) {
-                let tile_entity = map.get_tile_entity_at_coord(build_tower.location);
+                let tile_entity = map.get_tile_entity_at_coord(build_tower.location).unwrap();
                 if let Ok(tile_type) = tile_query.get(tile_entity) {
-                    let tile_valid = *tile_type == TileType::Empty;
+                    let tower_on_tile = tower_query
+                        .iter()
+                        .filter(|(_, coord)| **coord == build_tower.location)
+                        .next()
+                        .is_none();
+                    let tile_valid = *tile_type == TileType::Empty && tower_on_tile;
                     let sufficient_gold = gold.get() >= TOWER_COST;
 
                     match (tile_valid, sufficient_gold) {
@@ -66,6 +80,79 @@ pub fn handle_build_tower_messages(
                     }
                 }
             }
+
+            commands.entity(entity).insert(IsHandled);
+        });
+}
+
+pub fn handle_place_knight_messages(
+    msg_query: Query<(Entity, &Message, &PlaceKnight, &Target)>,
+    map_query: Query<(Entity, &TileMap)>,
+    tower_query: Query<(Entity, &Tower, &Coordinate)>,
+    occupied_tower_query: Query<(Entity, &Tower, &Knight)>,
+    mut commands: Commands,
+    mut alerts: ResMut<SystemAlerts>,
+    mut knight_statuses: ResMut<KnightStatuses>,
+) {
+    msg_query
+        .iter()
+        .for_each(|(entity, _, place_knight, target_map)| {
+            let mut result = Ok(1);
+            let (map_entity, map) = map_query.get(target_map.0).unwrap();
+            let tower_on_tile = tower_query
+                .iter()
+                .filter(|(_, _, coord)| **coord == place_knight.location)
+                .map(|(e, _, _)| e)
+                .next();
+
+            if tower_on_tile.is_none() {
+                result = Err("You must place a knight on top of an existing Tower.");
+            } else if knight_statuses.get_status(place_knight.knight) != KUsageStatus::Ready {
+                result = Err("You can't use that knight!");
+            } else if occupied_tower_query.get(tower_on_tile.unwrap()).is_ok() {
+                result = Err("There's already a knight there.");
+            }
+
+            match result {
+                Ok(_) => {
+                    knight_statuses.set_status(place_knight.knight, KUsageStatus::InUse);
+                    add_knight_to_tower(tower_on_tile.unwrap(), place_knight.knight, &mut commands);
+                }
+
+                Err(msg) => {
+                    create_system_alert_message(&mut alerts, msg);
+                }
+            }
+
+            /*
+                if let Ok((map_entity, map)) = map_query.get(target_map.0) {
+                    let tile_entity = map.get_tile_entity_at_coord(build_tower.location);
+                    if let Ok(tile_type) = tile_query.get(tile_entity) {
+                        let tile_valid = *tile_type == TileType::Empty && tower_on_tile;
+                        let sufficient_gold = gold.get() >= TOWER_COST;
+
+                        match (tile_valid, sufficient_gold) {
+                            (true, true) => {
+                                /*
+                                spawn_tower(
+                                    map_entity,
+                                    map,
+                                    build_tower.location,
+                                    &mut commands,
+                                    &models,
+                                    build_tower.t_type,
+                                );
+                                */
+                                gold::send_change_gold_message(&mut commands, -TOWER_COST);
+                            }
+                            (true, false) => {
+                                create_system_alert_message(&mut alerts, "Not enough gold.")
+                            }
+                            _ => create_system_alert_message(&mut alerts, "Invalid Location"),
+                        }
+                    }
+                }
+            */
 
             commands.entity(entity).insert(IsHandled);
         });

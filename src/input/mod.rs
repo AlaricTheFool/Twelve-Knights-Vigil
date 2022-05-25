@@ -69,6 +69,20 @@ fn send_build_tower_messages(
                         .insert(Target(current_map.0.unwrap()));
                 }
             }
+
+            UIAction::PlaceKnight(k_type) => {
+                if mouse_btn.just_released(MouseButton::Left) && current_map.0.is_some() {
+                    commands
+                        .spawn()
+                        .insert(Message)
+                        .insert(PlaceKnight {
+                            location: coord,
+                            knight: k_type,
+                        })
+                        .insert(Target(current_map.0.unwrap()));
+                }
+            }
+
             _ => {}
         },
         _ => {}
@@ -77,7 +91,7 @@ fn send_build_tower_messages(
 
 fn reset_ui_action(mut ui_action: ResMut<UIAction>, mouse_btn: Res<Input<MouseButton>>) {
     match *ui_action {
-        UIAction::BuildTower(t_type) => {
+        UIAction::BuildTower(_) | UIAction::PlaceKnight(_) => {
             if !mouse_btn.pressed(MouseButton::Left) {
                 *ui_action = UIAction::None
             }

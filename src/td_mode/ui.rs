@@ -63,7 +63,7 @@ fn draw_tower_build_ui(
                     .is_pointer_button_down_on()
                     && *ui_action == UIAction::None
                 {
-                    eprintln!("Clicked a knight button.");
+                    *ui_action = UIAction::PlaceKnight(knight.clone());
                 }
             });
         });

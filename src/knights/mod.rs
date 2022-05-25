@@ -8,7 +8,7 @@ pub enum KUsageStatus {
     Locked,
 }
 
-#[derive(Eq, PartialEq, PartialOrd, Ord, Debug)]
+#[derive(Eq, PartialEq, PartialOrd, Ord, Debug, Copy, Clone, Component)]
 pub enum Knight {
     Normal,
     Swole,
@@ -51,6 +51,10 @@ impl KnightStatuses {
             KUsageStatus::Locked
         }
     }
+
+    pub fn set_status(&mut self, knight: Knight, new_status: KUsageStatus) {
+        self.0.insert(knight, new_status);
+    }
 }
 
 pub struct KnightPlugin;
@@ -59,4 +63,9 @@ impl Plugin for KnightPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(KnightStatuses::new());
     }
+}
+
+pub fn add_knight_to_tower(entity: Entity, knight: Knight, commands: &mut Commands) {
+    trace!("Adding knight {knight:?} to a tower.");
+    commands.entity(entity).insert(knight);
 }

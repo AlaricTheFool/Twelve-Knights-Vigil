@@ -28,6 +28,7 @@ impl Plugin for TowerPlugin {
             )
             .add_system(point_weapons_at_targets.run_in_state(GameMode::TDMode))
             .add_system(handle_build_tower_messages.run_in_state(GameMode::TDMode))
+            .add_system(handle_place_knight_messages.run_in_state(GameMode::TDMode))
             .add_system_to_stage(
                 CoreStage::PostUpdate,
                 damage_targeted_enemy.run_in_state(GameMode::TDMode),
@@ -66,6 +67,9 @@ impl Range {
 }
 
 #[derive(Component)]
+pub struct Tower;
+
+#[derive(Component)]
 pub struct CurrentTarget(Entity);
 
 #[derive(Component)]
@@ -102,7 +106,9 @@ pub fn spawn_tower(
     let tower_entity = commands
         .spawn()
         .insert(Name::new(format!("Tower [{}, {}]", coord.x, coord.y)))
+        .insert(coord)
         .insert(Parent(map_entity))
+        .insert(Tower)
         .insert_bundle(TransformBundle::from_transform(
             Transform::from_translation(map.calculate_tile_pos(coord.x, coord.y)),
         ))

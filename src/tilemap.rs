@@ -212,11 +212,12 @@ impl TileMap {
         }
     }
 
-    pub fn get_tile_entity_at_coord(&self, coord: Coordinate) -> Entity {
-        let idx = self
-            .coord_to_idx(coord.x, coord.y)
-            .expect("Attempted to get an invalid tile from a map.");
-        self.tiles[idx]
+    pub fn get_tile_entity_at_coord(&self, coord: Coordinate) -> Result<Entity, String> {
+        match self.coord_to_idx(coord.x, coord.y) {
+            Ok(idx) => Ok(self.tiles[idx]),
+
+            Err(msg) => Err(msg),
+        }
     }
 
     pub fn calculate_tile_pos(&self, x: i32, y: i32) -> Vec3 {
