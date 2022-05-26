@@ -17,6 +17,8 @@
 
 [ ] POTENTIAL BUG: Tile global transform not updated until movement.
 
+[ ] BUGFIX: What is going on with the targeting?
+
 
 HOW TO MAKE TOWERS AND KNIGHTS STEP BY STEP
 [ ] Step 1: Placing knight on tower applies list of components.

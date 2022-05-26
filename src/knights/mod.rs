@@ -61,11 +61,54 @@ pub struct KnightPlugin;
 
 impl Plugin for KnightPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(KnightStatuses::new());
+        app.insert_resource(KnightStatuses::new())
+            .add_system(reset_knights.run_if(respawn_message_received));
     }
 }
 
-pub fn add_knight_to_tower(entity: Entity, knight: Knight, commands: &mut Commands) {
-    trace!("Adding knight {knight:?} to a tower.");
-    commands.entity(entity).insert(knight);
+pub fn add_knight_to_tower(
+    entity: Entity,
+    tower_type: TowerType,
+    knight: Knight,
+    commands: &mut Commands,
+) {
+    info!("Adding knight {knight:?} to a tower.");
+    let mut e_commands = commands.entity(entity);
+    e_commands.insert(knight);
+
+    e_commands
+        .insert(Cooldown::new(0.5))
+        .insert(Range::new(1.0))
+        .insert(Weapon)
+        .insert(ProjectileSpawnPoint(Vec3::Y * 2.0));
+
+    match knight {
+        Knight::Normal => {
+            //TODO: Add appearance changes and generic components
+            match tower_type {
+                TowerType::Short => {
+                    e_commands
+                        .insert(ProjectileSpawnPoint(Vec3::Y * 0.2))
+                        .insert(Multishot(10))
+                        .insert(Spread(0.25))
+                        .insert(Speed(0.2));
+                }
+
+                TowerType::Medium => {
+                    e_commands.insert(Homing);
+                }
+
+                _ => error!("Did not implement tower type: {tower_type:?} for knight: {knight:?}"),
+            }
+        }
+        _ => error!("Did not implement towers for knight: {knight:?}"),
+    }
+}
+
+fn reset_knights(mut commands: Commands, reset_messages: Query<(Entity, &Reset)>) {
+    commands.insert_resource(KnightStatuses::new());
+
+    reset_messages.iter().for_each(|(e, _)| {
+        commands.entity(e).insert(IsHandled);
+    });
 }

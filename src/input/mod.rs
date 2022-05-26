@@ -1,3 +1,5 @@
+use bevy::input::keyboard::KeyboardInput;
+
 use crate::prelude::*;
 
 pub struct InputPlugin;
@@ -8,6 +10,7 @@ impl Plugin for InputPlugin {
             .insert_resource(UIAction::None)
             .insert_resource(MapControl::new())
             .add_system(update_map_rotation_dir.run_in_state(GameMode::TDMode))
+            .add_system(send_reset_message.run_in_state(GameMode::TDMode))
             .add_system_to_stage(CoreStage::Last, reset_ui_action)
             .add_system(send_build_tower_messages.run_in_state(GameMode::TDMode));
     }
@@ -98,5 +101,11 @@ fn reset_ui_action(mut ui_action: ResMut<UIAction>, mouse_btn: Res<Input<MouseBu
         }
 
         _ => {}
+    }
+}
+
+fn send_reset_message(key_btn: Res<Input<KeyCode>>, mut commands: Commands) {
+    if key_btn.just_pressed(KeyCode::R) {
+        commands.spawn().insert(Message).insert(Reset);
     }
 }

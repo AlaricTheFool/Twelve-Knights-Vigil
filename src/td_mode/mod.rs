@@ -9,7 +9,7 @@ mod life;
 mod towers;
 mod ui;
 
-use enemy::*;
+pub use enemy::*;
 use raycast::*;
 pub use towers::*;
 
@@ -34,7 +34,7 @@ impl Plugin for TDModePlugin {
                 CoreStage::PreUpdate,
                 respawn_tilemap
                     .run_in_state(GameMode::TDMode)
-                    .run_if(respawn_pushed),
+                    .run_if(respawn_message_received),
             )
             .add_system(spawn_enemies.run_in_state(GameMode::TDMode))
             .add_system(update_track_followers.run_in_state(GameMode::TDMode))
@@ -57,10 +57,6 @@ impl Plugin for TDModePlugin {
             FixedTimestepStage::new(std::time::Duration::from_millis(16)).with_stage(fixed_stage),
         );
     }
-}
-
-fn respawn_pushed(input: Res<Input<KeyCode>>) -> bool {
-    input.just_pressed(KeyCode::R)
 }
 
 fn return_to_menu(mut commands: Commands) {
@@ -134,6 +130,7 @@ fn respawn_tilemap(
     mut commands: Commands,
     query: Query<Entity, With<TileMap>>,
     enemy_query: Query<Entity, With<Enemy>>,
+    reset_messages: Query<(Entity, &Reset)>,
     mut current_map: ResMut<CurrentMap>,
 ) {
     for entity in enemy_query.iter() {
@@ -153,6 +150,10 @@ fn respawn_tilemap(
     current_map.0 = Some(new_map);
     life::send_reset_lives_message(&mut commands);
     gold::send_reset_gold_message(&mut commands);
+
+    reset_messages.iter().for_each(|(e, _)| {
+        commands.entity(e).insert(IsHandled);
+    });
 }
 
 fn initialize_tilemap(

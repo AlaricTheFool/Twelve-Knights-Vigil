@@ -1,7 +1,9 @@
 use crate::prelude::*;
 
+mod reset;
 mod system_alerts;
 
+pub use reset::*;
 pub use system_alerts::*;
 
 pub struct MessagePlugin;
@@ -25,6 +27,9 @@ pub struct Target(pub Entity);
 
 #[derive(Component)]
 pub struct Sender(pub Entity);
+
+#[derive(Component)]
+pub struct Reset;
 
 fn clear_handled_messages(query: Query<(Entity, &Message, &IsHandled)>, mut commands: Commands) {
     query.iter().for_each(|(entity, _, _)| {

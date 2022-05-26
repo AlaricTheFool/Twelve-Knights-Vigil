@@ -8,8 +8,8 @@ mod weapons;
 pub struct TowerPlugin;
 pub use self::cooldown::{spawn_cd_reset_message, Cooldown};
 use self::projectiles::*;
-use self::{projectiles::spawn_projectile_message, weapons::*};
 pub use building::*;
+pub use weapons::*;
 
 impl Plugin for TowerPlugin {
     fn build(&self, app: &mut App) {
@@ -31,7 +31,7 @@ impl Plugin for TowerPlugin {
             .add_system(handle_place_knight_messages.run_in_state(GameMode::TDMode))
             .add_system_to_stage(
                 CoreStage::PostUpdate,
-                damage_targeted_enemy.run_in_state(GameMode::TDMode),
+                fire_projectiles_at_targets.run_in_state(GameMode::TDMode),
             );
 
         #[cfg(feature = "debug")]
@@ -41,7 +41,7 @@ impl Plugin for TowerPlugin {
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Component)]
 pub enum TowerType {
     Short,
     Medium,
@@ -56,13 +56,14 @@ pub struct TowerModels {
 }
 
 #[derive(Component)]
-pub struct Range {
-    pub max_range: f32,
-}
+pub struct Range(f32);
 
 impl Range {
-    pub fn calculate_adjusted_range(&self) -> f32 {
-        self.max_range + 0.5
+    pub fn new(r: f32) -> Self {
+        Self(r)
+    }
+    pub fn get_adjusted(&self) -> f32 {
+        self.0 + 0.5
     }
 }
 
@@ -81,7 +82,7 @@ pub struct ValidTargets {
 }
 
 #[derive(Component)]
-pub struct ProjectileSpawnPoint(Vec3);
+pub struct ProjectileSpawnPoint(pub Vec3);
 
 fn initialize_tower_models(assets: Res<AssetServer>, mut commands: Commands) {
     let tower_models = TowerModels {
@@ -108,6 +109,7 @@ pub fn spawn_tower(
         .insert(Name::new(format!("Tower [{}, {}]", coord.x, coord.y)))
         .insert(coord)
         .insert(Parent(map_entity))
+        .insert(t_type)
         .insert(Tower)
         .insert_bundle(TransformBundle::from_transform(
             Transform::from_translation(map.calculate_tile_pos(coord.x, coord.y)),
@@ -155,7 +157,7 @@ fn detect_targets_in_range(
                 .iter()
                 .filter(|(_, _, e_transform)| {
                     r_transform.translation.distance(e_transform.translation)
-                        <= range.calculate_adjusted_range()
+                        <= range.get_adjusted()
                 })
                 .map(|(e_entity, _, _)| e_entity)
                 .collect();
@@ -190,7 +192,7 @@ fn add_debug_range_spheres(
         commands.entity(entity).with_children(|p| {
             p.spawn().insert_bundle(PbrBundle {
                 mesh: meshes.add(Mesh::from(shape::UVSphere {
-                    radius: range.calculate_adjusted_range(),
+                    radius: range.get_adjusted(),
                     sectors: 16,
                     stacks: 16,
                 })),
@@ -232,7 +234,7 @@ fn point_weapons_at_targets(
     });
 }
 
-fn damage_targeted_enemy(
+fn fire_projectiles_at_targets(
     tower_query: Query<(Entity, &CurrentTarget, &Cooldown)>,
     mut commands: Commands,
 ) {
@@ -240,6 +242,7 @@ fn damage_targeted_enemy(
         .iter()
         .filter(|(_, _, cooldown)| cooldown.is_ready())
         .for_each(|(tower_entity, target, _)| {
+            info!("Firing a ballista bolt.");
             spawn_projectile_message(
                 tower_entity,
                 target.0,
