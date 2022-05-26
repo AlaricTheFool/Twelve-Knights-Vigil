@@ -95,7 +95,7 @@ pub fn add_knight_to_tower(
                 }
 
                 TowerType::Medium => {
-                    e_commands.insert(Homing);
+                    e_commands.insert(Homing).insert(Range::new(3.0));
                 }
 
                 _ => error!("Did not implement tower type: {tower_type:?} for knight: {knight:?}"),

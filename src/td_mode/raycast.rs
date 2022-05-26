@@ -13,11 +13,6 @@ impl Plugin for PickablePlugin {
             .add_system(add_raycast_components_to_tile_meshes.run_in_state(GameMode::TDMode))
             .add_system(update_cursor_state.run_in_state(GameMode::TDMode))
             .add_system(update_raycast_with_cursor.run_in_state(GameMode::TDMode));
-
-        #[cfg(feature = "debug")]
-        app.insert_resource(
-            DefaultPluginState::<PickableRaycastSet>::default().with_debug_cursor(),
-        );
     }
 }
 

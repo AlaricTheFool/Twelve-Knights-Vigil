@@ -21,6 +21,7 @@ impl Plugin for TDModePlugin {
             .insert_resource(CurrentMap(None))
             .add_plugin(PickablePlugin)
             .add_plugin(TowerPlugin)
+            .add_plugin(EnemyPlugin)
             .add_plugin(KnightPlugin)
             .add_plugin(life::LifePlugin)
             .add_plugin(gold::GoldPlugin)

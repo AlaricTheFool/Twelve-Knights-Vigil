@@ -5,6 +5,7 @@ pub struct TDModeUIPlugin;
 impl Plugin for TDModeUIPlugin {
     fn build(&self, app: &mut App) {
         app.add_system(render_status_panel.run_in_state(GameMode::TDMode))
+            .add_system(draw_tower_inspector_ui.run_in_state(GameMode::TDMode))
             .add_system(draw_tower_build_ui.run_in_state(GameMode::TDMode));
     }
 }
@@ -68,4 +69,25 @@ fn draw_tower_build_ui(
             });
         });
     });
+}
+
+fn draw_tower_inspector_ui(
+    mut egui_context: ResMut<EguiContext>,
+    selection: Res<SelectionTarget>,
+    tower_query: Query<(&Tower, &TowerType)>,
+    knight_query: Query<&Knight>,
+) {
+    if let Some(selected_entity) = selection.0 {
+        if let Ok((_, tower_type)) = tower_query.get(selected_entity) {
+            let tower_name = if let Ok(knight) = knight_query.get(selected_entity) {
+                format!("{}'s {tower_type:?} Tower", knight.get_name())
+            } else {
+                format!("{tower_type:?} Tower")
+            };
+            egui::Window::new(tower_name).show(egui_context.ctx_mut(), |ui| {
+                let mut balance = 50.0;
+                ui.add(egui::Slider::new(&mut balance, 0.0..=100.0).text("Power/Speed"));
+            });
+        }
+    }
 }

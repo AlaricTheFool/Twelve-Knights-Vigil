@@ -287,7 +287,12 @@ fn projectile_enemy_collisions(
                     < 0.25
                 {
                     commands.entity(proj_e).despawn_recursive();
-                    commands.entity(enemy_e).despawn_recursive();
+
+                    commands
+                        .spawn()
+                        .insert(Message)
+                        .insert(Harm(1))
+                        .insert(Target(enemy_e));
                 }
             });
     });
