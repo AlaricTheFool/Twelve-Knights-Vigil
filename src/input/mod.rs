@@ -11,8 +11,18 @@ impl Plugin for InputPlugin {
             .insert_resource(MapControl::new())
             .insert_resource(SelectionTarget(None))
             .add_enter_system(GameMode::TDMode, initialize_tile_frame)
+            .add_system(
+                initialize_tile_frame
+                    .run_in_state(GameMode::TDMode)
+                    .run_if(respawn_message_received),
+            )
             .add_system(update_map_rotation_dir.run_in_state(GameMode::TDMode))
-            .add_system(update_frame_position.run_in_state(GameMode::TDMode))
+            .add_system(update_map_pan_dir.run_in_state(GameMode::TDMode))
+            .add_system(update_map_zoom_dir.run_in_state(GameMode::TDMode))
+            .add_system_to_stage(
+                CoreStage::Last,
+                update_frame_position.run_in_state(GameMode::TDMode),
+            )
             .add_system(send_reset_message.run_in_state(GameMode::TDMode))
             .add_system_to_stage(CoreStage::Last, reset_ui_action)
             .add_system(tower_selection.run_in_state(GameMode::TDMode))
@@ -33,12 +43,17 @@ pub struct SelectionTarget(pub Option<Entity>);
 
 pub struct MapControl {
     pub rotation_dir: f32,
-    //TODO: Panning
+    pub pan_dir: Vec2,
+    pub zoom_dir: f32,
 }
 
 impl MapControl {
     fn new() -> Self {
-        Self { rotation_dir: 0.0 }
+        Self {
+            rotation_dir: 0.0,
+            zoom_dir: 0.0,
+            pan_dir: Vec2::ZERO,
+        }
     }
 }
 
@@ -56,6 +71,37 @@ fn update_map_rotation_dir(keys: Res<Input<KeyCode>>, mut map_control: ResMut<Ma
         (false, true) => 1.0,
         _ => 0.0,
     };
+}
+
+fn update_map_pan_dir(keys: Res<Input<KeyCode>>, mut map_control: ResMut<MapControl>) {
+    let (up_pressed, down_pressed) = (keys.pressed(KeyCode::W), keys.pressed(KeyCode::S));
+    let (right_pressed, left_pressed) = (keys.pressed(KeyCode::D), keys.pressed(KeyCode::A));
+
+    let lr_dir = match (left_pressed, right_pressed) {
+        (true, false) => -1.0,
+        (false, true) => 1.0,
+        _ => 0.0,
+    };
+
+    let ud_dir = match (up_pressed, down_pressed) {
+        (true, false) => -1.0,
+        (false, true) => 1.0,
+        _ => 0.0,
+    };
+
+    map_control.pan_dir = Vec2::new(lr_dir, ud_dir);
+}
+
+fn update_map_zoom_dir(keys: Res<Input<KeyCode>>, mut map_control: ResMut<MapControl>) {
+    let (up_pressed, down_pressed) = (keys.pressed(KeyCode::O), keys.pressed(KeyCode::I));
+
+    let ud_dir = match (up_pressed, down_pressed) {
+        (true, false) => -1.0,
+        (false, true) => 1.0,
+        _ => 0.0,
+    };
+
+    map_control.zoom_dir = ud_dir;
 }
 
 fn send_build_tower_messages(

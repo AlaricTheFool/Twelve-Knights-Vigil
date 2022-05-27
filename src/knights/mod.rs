@@ -78,6 +78,7 @@ pub fn add_knight_to_tower(
 
     e_commands
         .insert(Cooldown::new(0.5))
+        .insert(Damage(5))
         .insert(Range::new(1.0))
         .insert(Weapon)
         .insert(ProjectileSpawnPoint(Vec3::Y * 2.0));
@@ -88,7 +89,8 @@ pub fn add_knight_to_tower(
             match tower_type {
                 TowerType::Short => {
                     e_commands
-                        .insert(ProjectileSpawnPoint(Vec3::Y * 0.2))
+                        .insert(PowerSlider::new())
+                        .insert(ProjectileSpawnPoint(Vec3::Y * 0.5))
                         .insert(Multishot(10))
                         .insert(Spread(0.25))
                         .insert(Speed(0.2));

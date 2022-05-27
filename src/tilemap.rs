@@ -78,7 +78,8 @@ impl TileMap {
                 };
 
                 let entity = commands
-                    .spawn_bundle(TransformBundle::from(Transform {
+                    .spawn()
+                    .insert_bundle(TransformBundle::from(Transform {
                         translation: self.calculate_tile_pos(x, y),
                         rotation: Quat::from_euler(EulerRot::XYZ, 0.0, rotation, 0.0),
                         ..default()

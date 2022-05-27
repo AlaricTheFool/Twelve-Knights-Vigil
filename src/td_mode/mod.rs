@@ -39,8 +39,9 @@ impl Plugin for TDModePlugin {
             )
             .add_system(spawn_enemies.run_in_state(GameMode::TDMode))
             .add_system(update_track_followers.run_in_state(GameMode::TDMode))
-            .add_system(initialize_tilemap.run_in_state(GameMode::TDMode))
             .add_system(handle_loss.run_in_state(GameMode::TDMode))
+            .add_system(initialize_tilemap.run_in_state(GameMode::TDMode))
+            .add_system(touch_tilemap_transform.run_in_state(GameMode::TDMode))
             .add_system(
                 return_to_menu
                     .run_in_state(GameMode::TDMode)
@@ -50,7 +51,9 @@ impl Plugin for TDModePlugin {
         let mut fixed_stage = SystemStage::parallel();
         fixed_stage
             .add_system(move_track_followers)
-            .add_system(rotate_tiles);
+            .add_system(zoom_camera)
+            .add_system(pan_map)
+            .add_system(rotate_camera);
 
         app.add_stage_before(
             CoreStage::Update,
@@ -59,6 +62,12 @@ impl Plugin for TDModePlugin {
         );
     }
 }
+
+#[derive(Component)]
+struct UserCamera;
+
+#[derive(Component)]
+struct CameraArm;
 
 fn return_to_menu(mut commands: Commands) {
     commands.insert_resource(NextState(GameMode::MainMenu));
@@ -88,12 +97,18 @@ fn load_td_models(assets: Res<AssetServer>, mut commands: Commands) {
 
 fn spawn_camera_and_lighting(mut commands: Commands) {
     commands
-        .spawn_bundle(PerspectiveCameraBundle {
-            transform: Transform::from_xyz(0.7, 8.0, 16.0)
-                .looking_at(Vec3::new(0.0, 0.3, 0.0), Vec3::Y),
-            ..default()
-        })
-        .insert(RayCastSource::<PickableRaycastSet>::new());
+        .spawn()
+        .insert(CameraArm)
+        .insert_bundle(TransformBundle::identity())
+        .with_children(|p| {
+            p.spawn_bundle(PerspectiveCameraBundle {
+                transform: Transform::from_xyz(0.7, 8.0, 16.0)
+                    .looking_at(Vec3::new(0.0, 0.3, 0.0), Vec3::Y),
+                ..default()
+            })
+            .insert(UserCamera)
+            .insert(RayCastSource::<PickableRaycastSet>::new());
+        });
     const HALF_SIZE: f32 = 10.0;
     commands.spawn_bundle(DirectionalLightBundle {
         directional_light: DirectionalLight {
@@ -167,7 +182,7 @@ fn initialize_tilemap(
     }
 }
 
-fn rotate_tiles(map_control: Res<MapControl>, mut query: Query<&mut Transform, With<TileMap>>) {
+fn rotate_camera(map_control: Res<MapControl>, mut query: Query<&mut Transform, With<CameraArm>>) {
     for mut transform in query.iter_mut() {
         let added_rot = Quat::from_euler(
             EulerRot::ZYX,
@@ -193,5 +208,37 @@ fn handle_loss(
 fn destroy_everything(query: Query<Entity>, mut commands: Commands) {
     query.iter().for_each(|entity| {
         commands.entity(entity).despawn();
+    });
+}
+
+fn zoom_camera(
+    user_camera_query: Query<(Entity, &Transform, &UserCamera)>,
+    controller: Res<MapControl>,
+    mut commands: Commands,
+) {
+    user_camera_query.iter().for_each(|(entity, tform, _)| {
+        let zoomed_translation = (tform.translation + tform.forward() * -controller.zoom_dir * 0.5)
+            .clamp_length_max(15.0);
+
+        if zoomed_translation.length_squared() >= 3.0 {
+            let zoomed_cam = tform.with_translation(zoomed_translation);
+
+            commands.entity(entity).insert(zoomed_cam);
+        }
+    });
+}
+
+fn pan_map(map_control: Res<MapControl>, mut query: Query<&mut Transform, With<CameraArm>>) {
+    for mut transform in query.iter_mut() {
+        transform.translation = (transform.translation
+            + transform.forward() * -map_control.pan_dir.y * 0.3
+            + transform.right() * map_control.pan_dir.x * 0.3)
+            .clamp_length_max(10.0);
+    }
+}
+
+fn touch_tilemap_transform(mut t_query: Query<&mut Transform, With<TileMap>>) {
+    t_query.iter_mut().for_each(|mut tform| {
+        *tform = tform.with_translation(tform.translation);
     });
 }

@@ -23,6 +23,7 @@ impl Plugin for ProjectilePlugin {
             .add_system_to_stage(CoreStage::PreUpdate, handle_projectile_spawn_messages)
             .add_system(set_initial_direction)
             .add_system(set_initial_speed)
+            .add_system(set_initial_damage)
             .add_system_to_stage(CoreStage::PostUpdate, apply_spread)
             .add_system(add_homing)
             .add_stage_before(
@@ -103,36 +104,41 @@ fn spawn_ballista_bolt(
 fn handle_projectile_spawn_messages(
     message_query: Query<(Entity, &Message, &Sender, &Target, &SpawnProjectile)>,
     spawn_point_query: Query<(&Transform, &ProjectileSpawnPoint)>,
+    enemy_query: Query<&Enemy>,
     multishot_query: Query<&Multishot>,
     models: Res<ProjectileModels>,
     current_map: Res<CurrentMap>,
     mut commands: Commands,
 ) {
-    message_query.iter().for_each(|(entity, _, sender, _, _)| {
-        if let Ok((spawn_tform, spawn_point)) = spawn_point_query.get(sender.0) {
-            let mut projectile_count = 1;
-            if let Ok(multishot) = multishot_query.get(sender.0) {
-                projectile_count = multishot.0;
-            }
+    message_query
+        .iter()
+        .for_each(|(entity, _, sender, target, _)| {
+            if let Ok((spawn_tform, spawn_point)) = spawn_point_query.get(sender.0) {
+                if let Ok(_) = enemy_query.get(target.0) {
+                    let mut projectile_count = 1;
+                    if let Ok(multishot) = multishot_query.get(sender.0) {
+                        projectile_count = multishot.0;
+                    }
 
-            let projectiles = (0..projectile_count)
-                .map(|_| {
-                    spawn_ballista_bolt(
-                        spawn_tform.translation + spawn_point.0,
-                        &models,
-                        &mut commands,
-                        current_map.0.unwrap(),
-                    )
-                })
-                .collect();
-            commands.entity(entity).insert(AlreadySpawned(projectiles));
-        } else {
-            error!(
+                    let projectiles = (0..projectile_count)
+                        .map(|_| {
+                            spawn_ballista_bolt(
+                                spawn_tform.translation + spawn_point.0,
+                                &models,
+                                &mut commands,
+                                current_map.0.unwrap(),
+                            )
+                        })
+                        .collect();
+                    commands.entity(entity).insert(AlreadySpawned(projectiles));
+                }
+            } else {
+                error!(
                 "Attempted to spawn a projectile from a source with no transform or spawn point."
             )
-        }
-        commands.entity(entity).insert(IsHandled);
-    });
+            }
+            commands.entity(entity).insert(IsHandled);
+        });
 }
 
 fn add_homing(
@@ -152,6 +158,29 @@ fn add_homing(
         .for_each(|(_, _, _, target, spawned)| {
             spawned.0.iter().for_each(|e| {
                 commands.entity(*e).insert(Homing).insert(Target(target.0));
+            });
+        });
+}
+
+fn set_initial_damage(
+    damage_query: Query<&Damage>,
+    projectile_messages: Query<(
+        &Message,
+        &SpawnProjectile,
+        &Sender,
+        &Target,
+        &AlreadySpawned,
+    )>,
+    mut commands: Commands,
+) {
+    projectile_messages
+        .iter()
+        .filter(|(_, _, sender, _, _)| damage_query.get(sender.0).is_ok())
+        .for_each(|(_, _, sender, _, spawned)| {
+            spawned.0.iter().for_each(|e| {
+                commands
+                    .entity(*e)
+                    .insert(damage_query.get(sender.0).unwrap().clone());
             });
         });
 }
@@ -195,10 +224,11 @@ fn set_initial_direction(
         .iter()
         .for_each(|(_, _, _, target, spawned)| {
             spawned.0.iter().for_each(|e| {
-                let proj_transform = transform_query.get(*e).unwrap();
-                let target_transform = enemy_query.get(target.0).unwrap();
-                let new_transform = proj_transform.looking_at(
-                    target_transform.0.translation + target_transform.1 .0,
+                let proj_transform = transform_query.get(*e);
+                let target_transform = enemy_query.get(target.0);
+
+                let new_transform = proj_transform.unwrap().looking_at(
+                    target_transform.unwrap().0.translation + target_transform.unwrap().1 .0,
                     Vec3::Y,
                 );
                 commands.entity(*e).insert(new_transform);
@@ -273,29 +303,33 @@ fn progress_projectile_lifespans(
 }
 
 fn projectile_enemy_collisions(
-    projectile_query: Query<(Entity, &Transform, &Projectile)>,
+    projectile_query: Query<(Entity, &Transform, &Projectile, &Damage)>,
     enemy_query: Query<(Entity, &Transform, &CenterOfMass, &Enemy)>,
     mut commands: Commands,
 ) {
-    projectile_query.iter().for_each(|(proj_e, proj_t, _)| {
-        enemy_query
-            .iter()
-            .for_each(|(enemy_e, enemy_t, enemy_center, _)| {
-                if proj_t
-                    .translation
-                    .distance(enemy_t.translation + enemy_center.0)
-                    < 0.25
-                {
-                    commands.entity(proj_e).despawn_recursive();
+    projectile_query
+        .iter()
+        .for_each(|(proj_e, proj_t, _, damage)| {
+            enemy_query
+                .iter()
+                .for_each(|(enemy_e, enemy_t, enemy_center, _)| {
+                    if proj_t
+                        .translation
+                        .distance(enemy_t.translation + enemy_center.0)
+                        < 0.25
+                    {
+                        commands.entity(proj_e).despawn_recursive();
 
-                    commands
-                        .spawn()
-                        .insert(Message)
-                        .insert(Harm(1))
-                        .insert(Target(enemy_e));
-                }
-            });
-    });
+                        trace!("Dealing {} damage to an enemy.", damage.0);
+
+                        commands
+                            .spawn()
+                            .insert(Message)
+                            .insert(Harm(damage.0))
+                            .insert(Target(enemy_e));
+                    }
+                });
+        });
 }
 
 fn apply_spread(

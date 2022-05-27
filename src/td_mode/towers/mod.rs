@@ -29,6 +29,7 @@ impl Plugin for TowerPlugin {
             .add_system(point_weapons_at_targets.run_in_state(GameMode::TDMode))
             .add_system(handle_build_tower_messages.run_in_state(GameMode::TDMode))
             .add_system(handle_place_knight_messages.run_in_state(GameMode::TDMode))
+            .add_system(normal_knight_slider_changed.run_in_state(GameMode::TDMode))
             .add_system_to_stage(
                 CoreStage::PostUpdate,
                 fire_projectiles_at_targets.run_in_state(GameMode::TDMode),
@@ -103,7 +104,7 @@ pub fn spawn_tower(
     models: &TowerModels,
     t_type: TowerType,
 ) {
-    eprintln!("Spawning tower at {coord:?}");
+    info!("Spawning tower at {coord:?}");
     let tower_entity = commands
         .spawn()
         .insert(Name::new(format!("Tower [{}, {}]", coord.x, coord.y)))
@@ -119,7 +120,7 @@ pub fn spawn_tower(
                 .insert_bundle(TransformBundle::from_transform(
                     Transform::identity()
                         .with_scale(Vec3::ONE * 0.5)
-                        .with_translation(Vec3::Y * 0.25),
+                        .with_translation(Vec3::Y * 0.20),
                 ))
                 .with_children(|p| {
                     let model = match t_type {
@@ -242,7 +243,6 @@ fn fire_projectiles_at_targets(
         .iter()
         .filter(|(_, _, cooldown)| cooldown.is_ready())
         .for_each(|(tower_entity, target, _)| {
-            info!("Firing a ballista bolt.");
             spawn_projectile_message(
                 tower_entity,
                 target.0,
@@ -251,5 +251,34 @@ fn fire_projectiles_at_targets(
             );
 
             spawn_cd_reset_message(tower_entity, &mut commands);
+        });
+}
+
+fn normal_knight_slider_changed(
+    tower_query: Query<
+        (Entity, &Tower, &Knight, &Cooldown, &Damage, &PowerSlider),
+        Changed<PowerSlider>,
+    >,
+    mut commands: Commands,
+) {
+    tower_query
+        .iter()
+        .filter(|(_, _, knight, _, _, _)| **knight == Knight::Normal)
+        .for_each(|(e, _, _, _, _, slider)| {
+            let speed_pct = slider.get();
+            let power_pct = slider.get_reverse();
+
+            let min_cd = 0.1;
+            let max_cd = 1.0;
+
+            let new_cd = max_cd + ((min_cd - max_cd) * speed_pct);
+            commands.entity(e).insert(Cooldown::new(new_cd));
+
+            let min_damage = 1;
+            let max_damage = 10;
+
+            let new_damage =
+                (min_damage as f32 + ((max_damage - min_damage) as f32 * power_pct).round()) as u32;
+            commands.entity(e).insert(Damage(new_damage));
         });
 }
