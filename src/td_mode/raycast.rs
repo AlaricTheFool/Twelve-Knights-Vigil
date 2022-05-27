@@ -80,9 +80,15 @@ fn update_cursor_state(
     source_query: Query<&RayCastSource<PickableRaycastSet>>,
     root_query: Query<&RootEntity>,
     tile_query: Query<&Tile>,
+    mut egui_context: ResMut<EguiContext>,
     mut cursor_state: ResMut<CursorState>,
 ) {
     *cursor_state = CursorState::NoTarget;
+
+    if egui_context.ctx_mut().is_pointer_over_area() {
+        return;
+    }
+
     let source = source_query.single();
 
     if let Some((entity, _)) = source.intersect_top() {
