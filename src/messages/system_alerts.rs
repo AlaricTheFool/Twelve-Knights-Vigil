@@ -8,9 +8,6 @@ const ALERT_TIME_MS: u64 = ALERT_TIME_SECS as u64 * 1000;
 
 const MAX_DISPLAYED_ALERTS: usize = 8;
 
-pub struct SystemAlert(pub String);
-pub struct MessageTimer(Duration);
-
 pub struct SystemAlerts(VecDeque<(String, Duration)>);
 
 impl SystemAlerts {
@@ -47,12 +44,11 @@ pub fn display_system_messages(
                             .0
                             .iter()
                             .map(|(alert, mut timer)| {
-                                if let Some(new_dur) = timer.checked_sub(time.delta()) {
-                                    timer = new_dur;
-                                }
+                                timer = timer.saturating_sub(time.delta());
 
                                 (alert.to_owned(), timer)
                             })
+                            .filter(|(_, duration)| *duration != Duration::ZERO)
                             .collect();
 
                         alerts.0.iter().rev().for_each(|(msg, duration)| {

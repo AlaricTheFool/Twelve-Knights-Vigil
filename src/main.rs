@@ -21,6 +21,7 @@ mod prelude {
     pub use crate::messages::*;
     pub use crate::td_mode::*;
     pub use crate::tilemap::*;
+    pub use bevy::input::mouse::*;
     pub use bevy::prelude::*;
     pub use bevy_egui::{egui, EguiContext, EguiPlugin};
     pub use bevy_mod_raycast::{RayCastMesh, RayCastSource};

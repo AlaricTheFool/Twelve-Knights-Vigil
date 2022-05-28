@@ -217,7 +217,7 @@ fn zoom_camera(
     mut commands: Commands,
 ) {
     user_camera_query.iter().for_each(|(entity, tform, _)| {
-        let zoomed_translation = (tform.translation + tform.forward() * -controller.zoom_dir * 0.5)
+        let zoomed_translation = (tform.translation + tform.forward() * -controller.zoom_dir * 1.0)
             .clamp_length_max(15.0);
 
         if zoomed_translation.length_squared() >= 3.0 {

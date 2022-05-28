@@ -92,16 +92,13 @@ fn update_map_pan_dir(keys: Res<Input<KeyCode>>, mut map_control: ResMut<MapCont
     map_control.pan_dir = Vec2::new(lr_dir, ud_dir);
 }
 
-fn update_map_zoom_dir(keys: Res<Input<KeyCode>>, mut map_control: ResMut<MapControl>) {
-    let (up_pressed, down_pressed) = (keys.pressed(KeyCode::O), keys.pressed(KeyCode::I));
-
-    let ud_dir = match (up_pressed, down_pressed) {
-        (true, false) => -1.0,
-        (false, true) => 1.0,
-        _ => 0.0,
-    };
-
-    map_control.zoom_dir = ud_dir;
+fn update_map_zoom_dir(mut wheel: EventReader<MouseWheel>, mut map_control: ResMut<MapControl>) {
+    let scroll = wheel.iter().fold(0.0, |acc, event| acc + -event.y);
+    if scroll != 0.0 {
+        map_control.zoom_dir = scroll.signum();
+    } else {
+        map_control.zoom_dir = 0.0;
+    }
 }
 
 fn send_build_tower_messages(
