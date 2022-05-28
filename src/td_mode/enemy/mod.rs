@@ -1,4 +1,5 @@
 use super::*;
+use waves::*;
 
 mod health;
 
@@ -29,8 +30,17 @@ impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
         app.add_system(handle_heal_messages)
             .add_system(handle_harm_messages)
+            .add_system(
+                spawn_enemies
+                    .run_in_state(WaveState::WaveInProgress)
+                    .run_if(enemies_left_to_spawn),
+            )
             .add_system_to_stage(CoreStage::PostUpdate, kill_dead_enemies);
     }
+}
+
+fn enemies_left_to_spawn(wave: Res<WaveInfo>) -> bool {
+    wave.remaining_enemies_to_spawn > 0
 }
 
 pub fn spawn_enemies(
@@ -39,8 +49,10 @@ pub fn spawn_enemies(
     time: Res<Time>,
     map: Res<CurrentMap>,
     mut commands: Commands,
+    mut wave: ResMut<WaveInfo>,
 ) {
     if map.0.is_some() && timer.0.tick(time.delta()).just_finished() {
+        wave.remaining_enemies_to_spawn -= 1;
         commands
             .spawn_bundle(TransformBundle::from(Transform { ..default() }))
             .insert(Name::new(format!("Enemy")))

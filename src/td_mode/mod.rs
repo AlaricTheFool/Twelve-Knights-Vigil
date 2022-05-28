@@ -8,6 +8,7 @@ pub mod raycast;
 mod life;
 mod towers;
 mod ui;
+mod waves;
 
 pub use enemy::*;
 use raycast::*;
@@ -23,6 +24,7 @@ impl Plugin for TDModePlugin {
             .add_plugin(TowerPlugin)
             .add_plugin(EnemyPlugin)
             .add_plugin(KnightPlugin)
+            .add_plugin(waves::WavePlugin)
             .add_plugin(life::LifePlugin)
             .add_plugin(gold::GoldPlugin)
             .add_plugin(ui::TDModeUIPlugin)
@@ -37,7 +39,6 @@ impl Plugin for TDModePlugin {
                     .run_in_state(GameMode::TDMode)
                     .run_if(respawn_message_received),
             )
-            .add_system(spawn_enemies.run_in_state(GameMode::TDMode))
             .add_system(update_track_followers.run_in_state(GameMode::TDMode))
             .add_system(handle_loss.run_in_state(GameMode::TDMode))
             .add_system(initialize_tilemap.run_in_state(GameMode::TDMode))

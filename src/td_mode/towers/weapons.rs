@@ -38,3 +38,6 @@ impl PowerSlider {
 
 #[derive(Component, Copy, Clone)]
 pub struct Damage(pub u32);
+
+#[derive(Component, Copy, Clone)]
+pub struct Explosive(pub Range);

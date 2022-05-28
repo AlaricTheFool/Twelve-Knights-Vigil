@@ -81,29 +81,27 @@ pub fn add_knight_to_tower(
         .insert(Damage(5))
         .insert(Range::new(1.0))
         .insert(Weapon)
+        .insert(PowerSlider::new())
         .insert(ProjectileSpawnPoint(Vec3::Y * 2.0));
 
-    match knight {
-        Knight::Normal => {
-            //TODO: Add appearance changes and generic components
-            match tower_type {
-                TowerType::Short => {
-                    e_commands
-                        .insert(PowerSlider::new())
-                        .insert(ProjectileSpawnPoint(Vec3::Y * 0.5))
-                        .insert(Multishot(10))
-                        .insert(Spread(0.25))
-                        .insert(Speed(0.2));
-                }
-
-                TowerType::Medium => {
-                    e_commands.insert(Homing).insert(Range::new(3.0));
-                }
-
-                _ => error!("Did not implement tower type: {tower_type:?} for knight: {knight:?}"),
-            }
+    match (knight, tower_type) {
+        (Knight::Normal, TowerType::Short) => {
+            e_commands
+                .insert(ProjectileSpawnPoint(Vec3::Y * 0.5))
+                .insert(Multishot(10))
+                .insert(Spread(0.25))
+                .insert(Speed(0.2));
         }
-        _ => error!("Did not implement towers for knight: {knight:?}"),
+
+        (Knight::Normal, TowerType::Medium) => {
+            e_commands.insert(Homing).insert(Range::new(3.0));
+        }
+
+        (Knight::Normal, TowerType::Tall) => {
+            e_commands.insert(Explosive(Range::new(0.5)));
+        }
+
+        _ => error!("Did not implement tower type: {tower_type:?} for knight: {knight:?}"),
     }
 }
 

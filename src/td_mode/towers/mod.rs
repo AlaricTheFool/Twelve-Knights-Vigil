@@ -30,6 +30,7 @@ impl Plugin for TowerPlugin {
             .add_system(handle_build_tower_messages.run_in_state(GameMode::TDMode))
             .add_system(handle_place_knight_messages.run_in_state(GameMode::TDMode))
             .add_system(normal_knight_slider_changed.run_in_state(GameMode::TDMode))
+            .add_system(sell_towers.run_in_state(GameMode::TDMode))
             .add_system_to_stage(
                 CoreStage::PostUpdate,
                 fire_projectiles_at_targets.run_in_state(GameMode::TDMode),
@@ -57,6 +58,9 @@ pub struct TowerModels {
 }
 
 #[derive(Component)]
+pub struct Sell;
+
+#[derive(Component, Copy, Clone)]
 pub struct Range(f32);
 
 impl Range {
@@ -281,4 +285,20 @@ fn normal_knight_slider_changed(
                 (min_damage as f32 + ((max_damage - min_damage) as f32 * power_pct).round()) as u32;
             commands.entity(e).insert(Damage(new_damage));
         });
+}
+
+fn sell_towers(
+    sell_messages: Query<(Entity, &Target), (With<Message>, With<Sell>)>,
+    knight_query: Query<&Knight>,
+    mut commands: Commands,
+    mut knight_statuses: ResMut<KnightStatuses>,
+) {
+    sell_messages.iter().for_each(|(message_e, target)| {
+        if let Ok(knight) = knight_query.get(target.0) {
+            knight_statuses.set_status(*knight, KUsageStatus::Ready);
+        }
+
+        commands.entity(target.0).despawn_recursive();
+        commands.entity(message_e).insert(IsHandled);
+    });
 }

@@ -1,7 +1,6 @@
 use crate::prelude::*;
 use std::time::Duration;
 
-const PROJECTILE_PROPERTIES_LABEL: &str = "apply_projectile_properties";
 const FIXED_STAGE_MS: u64 = 16;
 
 pub struct ProjectilePlugin;
@@ -26,6 +25,7 @@ impl Plugin for ProjectilePlugin {
             .add_system(set_initial_damage)
             .add_system_to_stage(CoreStage::PostUpdate, apply_spread)
             .add_system(add_homing)
+            .add_system(add_explosive)
             .add_stage_before(
                 CoreStage::Update,
                 "projectile_fixed_stage",
@@ -57,6 +57,9 @@ struct AlreadySpawned(Vec<Entity>);
 
 #[derive(Component)]
 struct Lifetime(Duration);
+
+#[derive(Component)]
+struct ProjectileCollision;
 
 fn initialize_projectile_models(assets: Res<AssetServer>, mut commands: Commands) {
     let projectile_models = ProjectileModels {
@@ -158,6 +161,31 @@ fn add_homing(
         .for_each(|(_, _, _, target, spawned)| {
             spawned.0.iter().for_each(|e| {
                 commands.entity(*e).insert(Homing).insert(Target(target.0));
+            });
+        });
+}
+
+fn add_explosive(
+    explosive_query: Query<&Explosive>,
+    projectile_messages: Query<(
+        &Message,
+        &SpawnProjectile,
+        &Sender,
+        &Target,
+        &AlreadySpawned,
+    )>,
+    mut commands: Commands,
+) {
+    projectile_messages
+        .iter()
+        .filter(|(_, _, sender, _, _)| explosive_query.contains(sender.0))
+        .for_each(|(_, _, sender, target, spawned)| {
+            spawned.0.iter().for_each(|e| {
+                let explosive = explosive_query.get(sender.0).unwrap();
+                commands
+                    .entity(*e)
+                    .insert(*explosive)
+                    .insert(Target(target.0));
             });
         });
 }
@@ -265,6 +293,16 @@ fn move_projectiles(
                 .with_translation(new_transform.translation + new_transform.forward() * speed.0);
 
             commands.entity(entity).insert(new_transform);
+
+            if new_transform.translation.y <= 0.0 {
+                /*
+                commands
+                    .spawn()
+                    .insert(Message)
+                    .insert(Target(entity))
+                    .insert(ProjectileCollision);
+                */
+            }
             /*
                 let remaining_dist = new_transform.translation.distance(target_pos);
                 if remaining_dist < 0.25 {
@@ -310,6 +348,7 @@ fn projectile_enemy_collisions(
     projectile_query
         .iter()
         .for_each(|(proj_e, proj_t, _, damage)| {
+            let mut collided = None;
             enemy_query
                 .iter()
                 .for_each(|(enemy_e, enemy_t, enemy_center, _)| {
@@ -318,7 +357,10 @@ fn projectile_enemy_collisions(
                         .distance(enemy_t.translation + enemy_center.0)
                         < 0.25
                     {
-                        commands.entity(proj_e).despawn_recursive();
+                        let offset = proj_t
+                            .with_translation(Vec3::ZERO + enemy_center.0 + proj_t.back() * 0.1);
+
+                        collided = Some((enemy_e, offset));
 
                         trace!("Dealing {} damage to an enemy.", damage.0);
 
@@ -329,6 +371,23 @@ fn projectile_enemy_collisions(
                             .insert(Target(enemy_e));
                     }
                 });
+            if let Some((pinned_e, pinned_offset)) = collided {
+                commands
+                    .entity(proj_e)
+                    .remove::<Damage>()
+                    .remove::<Speed>()
+                    .remove::<Lifetime>()
+                    .insert(pinned_offset)
+                    .insert(Parent(pinned_e));
+
+                /*
+                commands
+                    .spawn()
+                    .insert(Message)
+                    .insert(Target(proj_e))
+                    .insert(ProjectileCollision);
+                */
+            }
         });
 }
 

@@ -50,6 +50,10 @@ impl Cooldown {
     pub fn refill(&mut self) {
         self.current += self.max;
     }
+
+    pub fn shots_per_second(&self) -> f32 {
+        1000.0 / self.max as f32
+    }
 }
 
 #[derive(Component)]

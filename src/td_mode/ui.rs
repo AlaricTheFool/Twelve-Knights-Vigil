@@ -77,6 +77,8 @@ fn draw_tower_inspector_ui(
     tower_query: Query<(&Tower, &TowerType)>,
     knight_query: Query<&Knight>,
     power_slider_query: Query<&PowerSlider>,
+    damage_query: Query<&Damage>,
+    cd_query: Query<&Cooldown>,
     mut commands: Commands,
 ) {
     if let Some(selected_entity) = selection.0 {
@@ -97,6 +99,24 @@ fn draw_tower_inspector_ui(
                             .entity(selected_entity)
                             .insert(PowerSlider::with_value(balance));
                     }
+                }
+
+                ui.horizontal(|ui| {
+                    if let Ok(damage) = damage_query.get(selected_entity) {
+                        ui.label(format!("Damage: {}", damage.0));
+                    }
+
+                    if let Ok(cd) = cd_query.get(selected_entity) {
+                        ui.label(format!("Shots per Second: {:.2}", cd.shots_per_second()));
+                    }
+                });
+
+                if ui.button("Sell").clicked() {
+                    commands
+                        .spawn()
+                        .insert(Message)
+                        .insert(Sell)
+                        .insert(Target(selected_entity));
                 }
             });
         }
