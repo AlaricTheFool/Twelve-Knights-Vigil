@@ -22,8 +22,8 @@
 
 
 HOW TO MAKE TOWERS AND KNIGHTS STEP BY STEP
-[ ] Step 1: Placing knight on tower applies list of components.
-[ ] Step 2: Components act out appropriate weapon behavior.
-[ ] Step 3: Clicking on Towers opens tower interface.
+[X] Step 1: Placing knight on tower applies list of components.
+[X] Step 2: Components act out appropriate weapon behavior.
+[X] Step 3: Clicking on Towers opens tower interface.
 [ ] Step 4: Upgrades in TOwer Interface apply additional list of components (Overwrite for improvements)
-[ ] Step 5: Tower interface contains minigames
+[X] Step 5: Tower interface contains minigames
