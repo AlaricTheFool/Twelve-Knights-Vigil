@@ -1,5 +1,7 @@
 use crate::prelude::*;
 
+const TILE_SIZE: f32 = 1.0;
+
 pub struct CurrentMap(pub Option<Entity>);
 
 #[derive(Component)]
@@ -86,6 +88,7 @@ impl TileMap {
                     }))
                     .insert(Parent(tile_parent))
                     .insert(Name::new(format!("Tile [{x}, {y}]")))
+                    .insert(CenterOfMass(Vec3::Y * 0.2))
                     .insert(Tile { x, y })
                     .insert(tile)
                     .with_children(|p| {
@@ -222,11 +225,19 @@ impl TileMap {
     }
 
     pub fn calculate_tile_pos(&self, x: i32, y: i32) -> Vec3 {
+        let x_t = x as f32 - (self.width as f32) * 0.5;
         Vec3::new(
             x as f32 - (self.width as f32) * 0.5,
             0.0,
             y as f32 - (self.height as f32) * 0.5,
         )
+    }
+
+    pub fn get_coord_at_pos(&self, x: f32, y: f32) -> Coordinate {
+        let x = x as i32 + (self.width / 2);
+        let y = y as i32 + (self.height / 2);
+
+        Coordinate { x, y }
     }
 }
 

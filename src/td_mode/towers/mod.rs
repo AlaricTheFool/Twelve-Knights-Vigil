@@ -30,7 +30,7 @@ impl Plugin for TowerPlugin {
             .add_system(handle_build_tower_messages.run_in_state(GameMode::TDMode))
             .add_system(handle_place_knight_messages.run_in_state(GameMode::TDMode))
             .add_system(normal_knight_slider_changed.run_in_state(GameMode::TDMode))
-            .add_system(sell_towers.run_in_state(GameMode::TDMode))
+            .add_system_to_stage(CoreStage::Last, sell_towers.run_in_state(GameMode::TDMode))
             .add_system_to_stage(
                 CoreStage::PostUpdate,
                 fire_projectiles_at_targets.run_in_state(GameMode::TDMode),
