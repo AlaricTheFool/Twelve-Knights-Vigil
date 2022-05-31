@@ -76,7 +76,6 @@ fn draw_tower_inspector_ui(
     selection: Res<SelectionTarget>,
     tower_query: Query<(&Tower, &TowerType)>,
     knight_query: Query<&Knight>,
-    power_slider_query: Query<&PowerSlider>,
     damage_query: Query<&Damage>,
     cd_query: Query<&Cooldown>,
     mut commands: Commands,
@@ -89,18 +88,6 @@ fn draw_tower_inspector_ui(
                 format!("{tower_type:?} Tower")
             };
             egui::Window::new(tower_name).show(egui_context.ctx_mut(), |ui| {
-                if let Ok(power_slider) = power_slider_query.get(selected_entity) {
-                    let mut balance = power_slider.get();
-                    let initial = balance;
-                    ui.add(egui::Slider::new(&mut balance, 0.0..=1.0).text("Power/Speed"));
-
-                    if initial != balance {
-                        commands
-                            .entity(selected_entity)
-                            .insert(PowerSlider::with_value(balance));
-                    }
-                }
-
                 ui.horizontal(|ui| {
                     if let Ok(damage) = damage_query.get(selected_entity) {
                         ui.label(format!("Damage: {}", damage.0));

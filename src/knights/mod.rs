@@ -85,7 +85,6 @@ pub fn add_knight_to_tower(
         .insert(Damage(5))
         .insert(Range::new(1.0))
         .insert(Weapon)
-        .insert(PowerSlider::new())
         .insert(ProjectileSpawnPoint(Vec3::Y * 2.0));
 
     match (knight, tower_type) {
