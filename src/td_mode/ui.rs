@@ -76,6 +76,8 @@ fn draw_tower_inspector_ui(
     selection: Res<SelectionTarget>,
     tower_query: Query<(&Tower, &TowerType)>,
     knight_query: Query<&Knight>,
+    power_bar_query: Query<&PowerBar>,
+    tic_tac_toe_query: Query<&tic_tac_toe::TicTacToe>,
     damage_query: Query<&Damage>,
     cd_query: Query<&Cooldown>,
     mut commands: Commands,
@@ -88,6 +90,17 @@ fn draw_tower_inspector_ui(
                 format!("{tower_type:?} Tower")
             };
             egui::Window::new(tower_name).show(egui_context.ctx_mut(), |ui| {
+                if let Ok(power_bar) = power_bar_query.get(selected_entity) {
+                    let pct = power_bar.get_pct();
+                    ui.add(egui::widgets::ProgressBar::new(pct));
+                }
+
+                if let Ok(tic_tac_toe) = tic_tac_toe_query.get(selected_entity) {
+                    if let Some(played_move_board) = tic_tac_toe.render_egui(ui) {
+                        commands.entity(selected_entity).insert(played_move_board);
+                    }
+                }
+
                 ui.horizontal(|ui| {
                     if let Ok(damage) = damage_query.get(selected_entity) {
                         ui.label(format!("Damage: {}", damage.0));

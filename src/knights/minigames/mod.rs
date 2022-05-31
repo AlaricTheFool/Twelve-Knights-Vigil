@@ -1,3 +1,4 @@
 use super::*;
+use egui::*;
 
-mod tic_tac_toe;
+pub mod tic_tac_toe;

@@ -85,15 +85,15 @@ pub fn add_knight_to_tower(
         .insert(Damage(5))
         .insert(Range::new(1.0))
         .insert(Weapon)
+        .insert(PowerBar::new())
+        .insert(tic_tac_toe::TicTacToe::new())
         .insert(ProjectileSpawnPoint(Vec3::Y * 2.0));
 
     match (knight, tower_type) {
         (Knight::Normal, TowerType::Short) => {
             e_commands
                 .insert(ProjectileSpawnPoint(Vec3::Y * 0.5))
-                .insert(Multishot(10))
-                .insert(Spread(0.25))
-                .insert(Speed(0.2));
+                .insert(Multishot(10));
         }
 
         (Knight::Normal, TowerType::Medium) => {

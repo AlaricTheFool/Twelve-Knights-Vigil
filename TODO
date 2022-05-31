@@ -1,8 +1,6 @@
-[X] Deproject mouse position to the XZ Plane for tile selection
-[ ] Highlight Tiles
-[ ] Tower UI
-[X] Place Towers
-[X] Make towers shoot
+[ ] BUGFIX: Fix the stuttering on tower ui when you click a tic tac toe tile
+[ ] Make power bar decrease over time
+[ ] Generate Tic Tac Toe Boards that are 1 and 2 moves away from victory
 
 [ ] Animations
 [ ] Tower Rotation towards targets
@@ -12,7 +10,7 @@
 
 [ ] Will you create a discord bot for the game where it can post an image in a channel of the current board every 5 seconds and people can use a command with raw position values to place towers?
 
-[ ] Potentially make projectiles fly off into the distance when their target is gone.
+[X] Potentially make projectiles fly off into the distance when their target is gone.
 
 [ ] BUGFIX: Sort out the conflict with egui and inspector egui. And make a note of how to fix in the future.
 
@@ -20,10 +18,16 @@
 
 [ ] BUGFIX: What is going on with the targeting?
 
-
 HOW TO MAKE TOWERS AND KNIGHTS STEP BY STEP
 [X] Step 1: Placing knight on tower applies list of components.
 [X] Step 2: Components act out appropriate weapon behavior.
 [X] Step 3: Clicking on Towers opens tower interface.
 [ ] Step 4: Upgrades in TOwer Interface apply additional list of components (Overwrite for improvements)
 [X] Step 5: Tower interface contains minigames
+
+# COMPLETE
+[X] Deproject mouse position to the XZ Plane for tile selection
+[X] Highlight Tiles
+[X] Tower UI
+[X] Place Towers
+[X] Make towers shoot

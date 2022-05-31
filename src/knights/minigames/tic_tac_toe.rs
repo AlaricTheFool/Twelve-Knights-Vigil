@@ -6,24 +6,38 @@ enum BoardCell {
     Occupied(Player),
 }
 
+impl BoardCell {
+    fn to_btn_text(&self) -> String {
+        match *self {
+            BoardCell::Empty => " ",
+            BoardCell::Occupied(player) => match player {
+                Player::X => "X",
+                Player::O => "O",
+            },
+        }
+        .to_string()
+    }
+}
+
 #[derive(Debug, Copy, Clone, PartialEq)]
-enum Player {
+pub enum Player {
     X,
     O,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 enum GameState {
     InProgress(Player),
     GameEnded(GameResult),
 }
 
-#[derive(Debug, PartialEq)]
-enum GameResult {
+#[derive(Debug, PartialEq, Copy, Clone)]
+pub enum GameResult {
     Victory(Player),
     Draw,
 }
 
+#[derive(Component, Clone, Copy)]
 pub struct TicTacToe {
     game_state: GameState,
     board: [BoardCell; 9],
@@ -77,7 +91,7 @@ impl TicTacToe {
         }
     }
 
-    fn is_game_over(&self) -> Option<GameResult> {
+    pub fn is_game_over(&self) -> Option<GameResult> {
         //Check Rows
         if let Some(winner) = (0..3).find_map(|y| {
             let start_idx = y * 3;
@@ -168,6 +182,37 @@ impl TicTacToe {
         });
 
         result
+    }
+
+    pub fn render_egui(&self, ui: &mut Ui) -> Option<Self> {
+        (0..3).find_map(|y| {
+            let mut result = None;
+            ui.horizontal(|ui| {
+                result = (0..3).find_map(|x| {
+                    let tile = self.get_cell(x, y).unwrap();
+                    let btn_text = tile.to_btn_text();
+
+                    if ui.button(btn_text).clicked() {
+                        info!("Button Pushed! {x}, {y}");
+
+                        let coord = Coordinate::new(x, y);
+                        if let Ok(move_played_board) = self.with_next_move(coord) {
+                            return Some(move_played_board);
+                        }
+                    }
+
+                    None
+                });
+            });
+
+            result
+        })
+    }
+
+    fn with_next_move(&self, coord: Coordinate) -> Result<Self, TicTacToeError> {
+        let mut new_board = self.clone();
+        new_board.play_square(coord)?;
+        Ok(new_board)
     }
 }
 
