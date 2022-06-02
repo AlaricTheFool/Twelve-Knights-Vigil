@@ -1,0 +1,20 @@
+[DEFINE_SPEAKER: AVERAGE_KNIGHT => A]
+[DEFINE_SPEAKER: PLAYER => P]
+
+[SCENE: BLACK]
+[SOUND_LOOP: BIRD_FX_1]
+
+[A]
+You're finally awake.
+
+[P]
+Nngh
+
+[A]
+The wave, it's coming soon. You must wake up.
+
+[NARRATOR]
+You feel something fall on your face, you open your eyes and you feel the sting of crumbs.
+
+[A]
+Take this, it's white bread. The most nutritious meal any knight can have.

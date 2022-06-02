@@ -7,6 +7,7 @@ mod main_menu;
 mod messages;
 mod td_mode;
 mod tilemap;
+mod vn_mode;
 
 #[cfg(feature = "debug")]
 mod debug;
@@ -21,6 +22,7 @@ mod prelude {
     pub use crate::messages::*;
     pub use crate::td_mode::*;
     pub use crate::tilemap::*;
+    pub use crate::vn_mode::*;
     pub use bevy::input::mouse::*;
     pub use bevy::prelude::*;
     pub use bevy_egui::{egui, EguiContext, EguiPlugin};
@@ -59,6 +61,7 @@ fn main() {
     app.add_plugin(MessagePlugin).add_plugin(InputPlugin);
 
     app.add_plugin(TDModePlugin)
+        .add_plugin(VNModePlugin)
         .add_plugin(MainMenuPlugin)
         .add_plugin(cheats::CheatPlugin);
 

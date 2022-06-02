@@ -37,6 +37,10 @@ fn main_menu_ui(
                     commands.insert_resource(NextState(GameMode::TDMode));
                 }
 
+                if menu_button(&mut ui, "Visual Novel Test").clicked() {
+                    commands.insert_resource(NextState(GameMode::VNMode));
+                }
+
                 if menu_button(&mut ui, "Quit").clicked() {
                     exit.send(AppExit);
                 }

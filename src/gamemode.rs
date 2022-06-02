@@ -4,4 +4,5 @@ use crate::prelude::*;
 pub enum GameMode {
     MainMenu,
     TDMode,
+    VNMode,
 }
