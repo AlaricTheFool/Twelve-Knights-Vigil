@@ -17,6 +17,7 @@ impl Plugin for TowerPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(initialize_tower_models)
             .add_plugin(cooldown::CDPlugin)
+            .add_plugin(power_bar::PowerBarPlugin)
             .add_plugin(projectiles::ProjectilePlugin)
             .add_system(
                 detect_targets_in_range

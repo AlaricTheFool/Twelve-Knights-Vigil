@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 enum BoardCell {
     Empty,
     Occupied(Player),
@@ -91,6 +91,22 @@ impl TicTacToe {
         }
     }
 
+    pub fn play_random_square(&mut self) {
+        if self.is_game_over().is_some() {
+            return;
+        }
+
+        let mut successfully_played_a_square = false;
+        let mut tries = 0;
+        while !successfully_played_a_square && tries < 100 {
+            let rand_coord =
+                Coordinate::new(thread_rng().gen_range(0..3), thread_rng().gen_range(0..3));
+
+            successfully_played_a_square = self.play_square(rand_coord).is_ok();
+            tries += 1;
+        }
+    }
+
     pub fn is_game_over(&self) -> Option<GameResult> {
         //Check Rows
         if let Some(winner) = (0..3).find_map(|y| {
@@ -131,8 +147,9 @@ impl TicTacToe {
         }
 
         if !self.board.contains(&BoardCell::Empty) {
-            Some(GameResult::Draw);
+            return Some(GameResult::Draw);
         }
+
         None
     }
 
@@ -207,6 +224,10 @@ impl TicTacToe {
 
             result
         })
+    }
+
+    pub fn is_o_turn(&self) -> bool {
+        self.game_state == GameState::InProgress(Player::O)
     }
 
     fn with_next_move(&self, coord: Coordinate) -> Result<Self, TicTacToeError> {
@@ -368,6 +389,41 @@ mod tests {
             GameState::GameEnded(GameResult::Victory(Player::X))
         );
 
+        Ok(())
+    }
+
+    #[test]
+    fn test_draw() -> Result<(), TicTacToeError> {
+        let mut game = TicTacToe::new();
+
+        (0..3).try_for_each(|y| {
+            match y {
+                0 => {
+                    game.play_square(Coordinate::new(0, y))?;
+                    game.play_square(Coordinate::new(2, y))?;
+                    game.play_square(Coordinate::new(1, y))?;
+                }
+                1 => {
+                    game.play_square(Coordinate::new(1, 2))?;
+                    game.play_square(Coordinate::new(0, 2))?;
+                    game.play_square(Coordinate::new(2, 2))?;
+                }
+
+                _ => {
+                    game.play_square(Coordinate::new(1, 1))?;
+                    game.play_square(Coordinate::new(0, 1))?;
+                    game.play_square(Coordinate::new(2, 1))?;
+                }
+            }
+            Ok(())
+        })?;
+
+        assert_eq!(
+            game.game_state,
+            GameState::GameEnded(GameResult::Draw),
+            "This game state should be a draw. \n{}",
+            game.get_as_string()
+        );
         Ok(())
     }
 }

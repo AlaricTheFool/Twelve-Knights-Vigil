@@ -91,8 +91,11 @@ fn draw_tower_inspector_ui(
             };
             egui::Window::new(tower_name).show(egui_context.ctx_mut(), |ui| {
                 if let Ok(power_bar) = power_bar_query.get(selected_entity) {
-                    let pct = power_bar.get_pct();
-                    ui.add(egui::widgets::ProgressBar::new(pct));
+                    ui.horizontal(|ui| {
+                        let pct = power_bar.get_pct();
+                        ui.label(format!("{}%", power_bar.get_actual()));
+                        ui.add(egui::widgets::ProgressBar::new(pct));
+                    });
                 }
 
                 if let Ok(tic_tac_toe) = tic_tac_toe_query.get(selected_entity) {

@@ -4,7 +4,6 @@ use std::collections::BTreeMap;
 mod minigames;
 
 pub use minigames::*;
-
 #[derive(Copy, Clone, PartialEq)]
 pub enum KUsageStatus {
     Ready,
@@ -25,7 +24,7 @@ pub enum Knight {
 impl Knight {
     pub fn get_name(&self) -> &str {
         match *self {
-            Knight::Normal => "Normal Knight",
+            Knight::Normal => "Alright Knight",
             Knight::Swole => "Swole Knight",
             Knight::Lizard => "Lizard Knight",
             Knight::Banner => "Banner Knight",

@@ -20,7 +20,7 @@ impl Plugin for CDPlugin {
     }
 }
 
-#[derive(Component)]
+#[derive(Component, Copy, Clone)]
 pub struct Cooldown {
     max: i32,
     current: i32,
@@ -33,6 +33,15 @@ impl Cooldown {
             max: length_in_millis,
             current: length_in_millis,
         }
+    }
+
+    pub fn with_new_length(&self, new_length_in_seconds: f32) -> Self {
+        let mut new = self.clone();
+        let new_length_in_millis = (new_length_in_seconds * 1000.0).floor() as i32;
+        new.max = new_length_in_millis;
+        new.current = new.current.clamp(0, new.max);
+
+        new
     }
 
     pub fn progress_milliseconds(&mut self, amount: i32) {
