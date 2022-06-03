@@ -24,8 +24,23 @@ jobs:
         if: ${{ github.event_name == 'schedule' }}
         run: test -z $(git rev-list --after="24 hours" ${{ github.sha }}) && echo "::set-output name=should_run::false"
 
-  build:
+  create-release:
     needs: check_date
+    if: ${{ needs.check_date.outputs.should_run != 'false' }}
+
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: taiki-e/create-gh-release-action@v1
+        with:
+          draft: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build:
+    needs: 
+      - check_date
+      - create-release
     if: ${{ needs.check_date.outputs.should_run != 'false' }}
     runs-on: ubuntu-latest
 
