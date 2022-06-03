@@ -13,6 +13,13 @@ impl VNScene {
         }
     }
 
+    pub fn from_events(events: Vec<VNEvent>) -> Self {
+        Self {
+            current_event: 0,
+            events,
+        }
+    }
+
     pub fn current(&self) -> Option<VNEvent> {
         if self.events.len() == 0 {
             return None;
@@ -26,7 +33,7 @@ impl Iterator for VNScene {
     type Item = VNEvent;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.current_event == self.events.len() {
+        if self.current_event == self.events.len() - 1 {
             return None;
         }
 

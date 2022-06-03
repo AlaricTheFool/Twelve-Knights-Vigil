@@ -1,54 +1,160 @@
 use super::*;
-use nom::branch::alt;
-use nom::bytes::complete::{is_not, tag, take, take_until, take_while};
-use nom::character::complete::char;
-use nom::combinator::{eof, opt};
-use nom::multi::{fold_many0, many0};
-use nom::sequence::{delimited, separated_pair, terminated};
-use nom::{Err, IResult};
+use std::collections::HashMap;
 
-fn square_brackets(input: &str) -> IResult<&str, &str> {
-    delimited(char('['), is_not("]"), char(']'))(input)
+pub fn is_bracketed(input: &str) -> bool {
+    input.starts_with("[") && input.ends_with("]")
 }
 
-fn define_speaker(input: &str) -> IResult<&str, String> {
-    let (remaining, cmd) = square_brackets(input)?;
-    let (cmd, _) = tag("DEFINE_SPEAKER:")(cmd)?;
-    let (_, (with, replace)) = separated_pair(is_not("=>"), tag("=>"), is_not("\t\r\n"))(cmd)?;
-
-    let with = &format!("[{}]", with.trim());
-    let replace = &format!("[{}]", replace.trim());
-
-    eprintln!("'{}' with '{}'", replace.trim(), with.trim());
-    let replaced = remaining.replace(replace.trim(), with.trim());
-    let replaced = replaced.trim().to_string();
-    Ok(("", replaced))
+#[derive(Debug, PartialEq)]
+pub enum VNParseError {
+    InvalidScenePath(String),
+    MismatchedBrackets(String),
+    UnrecognizedCommand(String),
+    InvalidArguments(String, String),
 }
 
-fn parse_dialogue(input: &str) -> IResult<&str, VNEvent> {
-    let (remaining, speaker_key) = square_brackets(input)?;
-    let (remaining, dialogue) = take_until("[")(remaining)?;
-    eprintln!("Speaker: '{speaker_key}'\nDialogue: '{dialogue}'\nRemaining: '{remaining}'");
+#[derive(PartialEq, Debug)]
+struct VNBracketParse {
+    command: String,
+    args: Option<String>,
+}
 
-    if let Ok(speaker) = Speaker::from_key(speaker_key) {
-        let event = VNEvent::Dialogue(speaker, dialogue.trim().to_string());
-        Ok((remaining, event))
-    } else {
-        Err(Err::Failure(nom::error::Error::new(
-            input,
-            nom::error::ErrorKind::Fail,
-        )))
+impl VNBracketParse {
+    fn parse_line(input: &str) -> Result<Self, VNParseError> {
+        if !is_bracketed(input) {
+            return Err(VNParseError::MismatchedBrackets(input.to_string()));
+        }
+
+        let input = input.strip_prefix("[").unwrap().strip_suffix("]").unwrap();
+        let parts: Vec<&str> = input.split(":").map(|s| s.trim()).collect();
+
+        let args = if parts.len() == 1 {
+            None
+        } else {
+            Some(parts[1].to_string())
+        };
+        Ok(Self {
+            command: parts[0].to_string(),
+            args,
+        })
+    }
+
+    fn to_vn_parse_command(&self) -> Result<VNParseCommand, VNParseError> {
+        match self.command.as_str() {
+            "DEFINE_SPEAKER" => {
+                if self.args.is_none() {
+                    return Err(VNParseError::InvalidArguments(
+                        self.command.to_owned(),
+                        "no args provided".to_string(),
+                    ));
+                }
+
+                let arg_string = self.args.clone().unwrap();
+                let args: Vec<&str> = arg_string.split("=>").map(|s| s.trim()).collect();
+
+                if args.len() != 2 {
+                    return Err(VNParseError::InvalidArguments(
+                        self.command.to_owned(),
+                        self.args.clone().unwrap(),
+                    ));
+                }
+
+                Ok(VNParseCommand::SpeakerRename(
+                    args[1].to_string(),
+                    args[0].to_string(),
+                ))
+            }
+
+            "SCENE" | "SOUND_LOOP" => Ok(VNParseCommand::UnimplementedCommand(
+                self.command.to_string(),
+            )),
+
+            _ => {
+                if let Ok(speaker) = Speaker::from_key(self.command.as_str()) {
+                    Ok(VNParseCommand::DefineSpeaker(speaker))
+                } else {
+                    Err(VNParseError::UnrecognizedCommand(self.command.to_owned()))
+                }
+            }
+        }
+    }
+
+    fn with_redefines(&self, map: &HashMap<String, String>) -> Self {
+        let mut command = self.command.to_owned();
+
+        while map.contains_key(&command) {
+            command = map[&command].to_owned();
+        }
+
+        Self {
+            command,
+            args: self.args.clone(),
+        }
     }
 }
 
-fn sp(input: &str) -> IResult<&str, &str> {
-    let chars = " \t\n\r";
-
-    take_while(move |c| chars.contains(c))(input)
+#[derive(Debug)]
+pub enum VNParseCommand {
+    SpeakerRename(String, String),
+    DefineSpeaker(Speaker),
+    UnimplementedCommand(String),
 }
 
-fn parse_scene(input: &str) -> IResult<&str, Vec<VNEvent>> {
-    terminated(many0(parse_dialogue), eof)(input)
+pub fn parse_text(input: &str) -> Result<Vec<VNEvent>, VNParseError> {
+    let mut renames = HashMap::new();
+    let mut result = Vec::new();
+    let mut current_speaker = Speaker::unknown();
+    let mut current_line = "".to_string();
+
+    input.lines().try_for_each(|line| {
+        if is_bracketed(line) {
+            let parse = VNBracketParse::parse_line(line)?;
+            let parse = parse.with_redefines(&renames);
+            let command = parse.to_vn_parse_command()?;
+
+            match command {
+                VNParseCommand::SpeakerRename(from, to) => {
+                    renames.insert(from, to);
+                },
+
+                VNParseCommand::DefineSpeaker(new_speaker) => {
+                    current_speaker = new_speaker;
+                },
+
+                VNParseCommand::UnimplementedCommand(cmd) => {
+                    error!("The command '{cmd}' has not yet been implemented but is a planned feature.");
+                }
+            }
+        } else {
+            if line != "" {
+                current_line.push_str(line);
+            } else if current_line != "" {
+                let dialogue = VNEvent::Dialogue(current_speaker.clone(), current_line.clone());
+                result.push(dialogue);
+                current_line = "".to_string();
+            }
+        }
+
+        Ok(())
+    })?;
+
+    Ok(result)
+}
+
+pub fn load_scene(scene_path: &str) -> Result<Vec<VNEvent>, VNParseError> {
+    use std::fs::File;
+    use std::io::prelude::*;
+
+    let formatted_path = format!("assets/vn_scenes/{}.dlog", scene_path);
+
+    if let Ok(mut file) = File::open(&formatted_path) {
+        let mut contents = String::new();
+        file.read_to_string(&mut contents).unwrap();
+
+        parse_text(&contents)
+    } else {
+        Err(VNParseError::InvalidScenePath(scene_path.to_string()))
+    }
 }
 
 #[cfg(test)]
@@ -56,38 +162,49 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_square_brackets() {
-        let input = "[SOUND_LOOP: BIRD_FX_1]";
-        let expected = "SOUND_LOOP: BIRD_FX_1";
-        let result = square_brackets(input);
-        assert_eq!(result, Ok(("", expected)));
+    fn test_parse_bracket_line_success() -> Result<(), VNParseError> {
+        let input = "[COMMAND: ARG ARG2 ARG3]";
+        let actual = VNBracketParse::parse_line(&input)?;
+        let expected = VNBracketParse {
+            command: "COMMAND".to_string(),
+            args: Some("ARG ARG2 ARG3".to_string()),
+        };
+
+        assert_eq!(actual, expected);
+        Ok(())
     }
 
     #[test]
-    fn test_define_speaker() {
-        let input = "[DEFINE_SPEAKER: PLAYER => P] [P] PPP";
-        let expected = "[PLAYER] PPP".to_string();
-        let result = define_speaker(input);
+    fn test_parse_bracket_line_no_args() -> Result<(), VNParseError> {
+        let input = "[OTHER_COMMAND]";
+        let actual = VNBracketParse::parse_line(&input)?;
+        let expected = VNBracketParse {
+            command: "OTHER_COMMAND".to_string(),
+            args: None,
+        };
 
-        assert_eq!(result, Ok(("", expected)));
+        assert_eq!(actual, expected);
+        Ok(())
     }
 
     #[test]
-    fn test_dialogue_line() {
-        let input = "[PLAYER] Blargasnarg\nBorganorg[Butts]";
-        let expected = VNEvent::Dialogue(Speaker::player(), "Blargasnarg\nBorganorg".to_string());
+    fn test_parse_bracket_bracket_error() -> Result<(), VNParseError> {
+        let input = "[NO_CLOSING_BRACKET";
+        let actual = VNBracketParse::parse_line(&input).unwrap_err();
+        let expected = VNParseError::MismatchedBrackets(input.to_string());
 
-        let result = parse_dialogue(input);
-        assert_eq!(result, Ok(("[Butts]", expected)))
+        assert_eq!(actual, expected);
+        Ok(())
     }
 
     #[test]
-    #[ignore]
-    fn test_big() {
-        let input = include_bytes!("../../assets/vn_scenes/test_scenes/test_dialogue.dlog");
-        let result = parse_scene(std::str::from_utf8(input).unwrap());
-        eprintln!("{:?}", result.unwrap());
+    fn test_invalid_command() -> Result<(), VNParseError> {
+        let input = "[INVALIDCOMMAND]";
+        let parse = VNBracketParse::parse_line(&input)?;
+        let actual = parse.to_vn_parse_command().unwrap_err();
+        let expected = VNParseError::UnrecognizedCommand("INVALIDCOMMAND".to_string());
 
-        assert!(false);
+        assert_eq!(actual, expected);
+        Ok(())
     }
 }

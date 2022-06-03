@@ -3180,7 +3180,6 @@ dependencies = [
  "bevy_egui",
  "bevy_mod_raycast",
  "iyes_loopless",
- "nom",
  "rand",
 ]
 
