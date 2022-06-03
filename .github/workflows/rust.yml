@@ -11,19 +11,11 @@ env:
 
 jobs:
   build:
-    strategy:
-      matrix:
-        toolchain: [stable, nightly]
-        os: [windows-latest, ubuntu-latest, macos-latest]
-        exclude:
-          - os: macos-latest
-            toolchain: nightly
-          - os: windows-latest
-            toolchain: nightly
-
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
 
     steps:
+    - name: Install alsa and udev
+      run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
     - uses: actions/checkout@v3
     - name: Build
       run: cargo build --verbose
