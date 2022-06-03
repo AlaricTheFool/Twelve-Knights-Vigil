@@ -23,4 +23,5 @@ jobs:
       run: cargo test --verbose
     - name: Build and upload Rust binary to GitHub Releases
       uses: taiki-e/upload-rust-binary-action@v1.3.0
-
+      with:
+        bin: twelve-knights-vigil
