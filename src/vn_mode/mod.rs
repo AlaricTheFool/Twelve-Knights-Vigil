@@ -23,19 +23,27 @@ fn load_test_scene(mut commands: Commands) {
 
 fn render_scene(mut scene: ResMut<VNScene>, mut egui_context: ResMut<EguiContext>) {
     if let Some(event) = scene.current() {
+        let frame = egui::Frame::dark_canvas(&egui::Style::default());
         match event {
             VNEvent::Dialogue(speaker, line) => {
-                egui::TopBottomPanel::bottom("Dialogue").show(egui_context.ctx_mut(), |ui| {
-                    ui.label(egui::RichText::new(speaker.name).size(20.0));
-                    ui.separator();
-                    ui.label(egui::RichText::new(line).size(15.0));
+                egui::Window::new("Dialogue")
+                    .title_bar(false)
+                    .auto_sized()
+                    .anchor(egui::Align2::CENTER_BOTTOM, egui::Vec2::new(0.0, -8.0))
+                    .frame(frame)
+                    .show(egui_context.ctx_mut(), |ui| {
+                        ui.vertical(|ui| {
+                            ui.label(egui::RichText::new(speaker.name).size(40.0));
+                            ui.separator();
+                            ui.label(egui::RichText::new(line).size(30.0));
 
-                    ui.with_layout(egui::Layout::right_to_left(), |ui| {
-                        if ui.button("Next").clicked() {
-                            scene.next();
-                        }
+                            ui.add_space(30.0);
+
+                            if ui.button(egui::RichText::new("Next").size(15.0)).clicked() {
+                                scene.next();
+                            }
+                        });
                     });
-                });
             }
         }
     }
