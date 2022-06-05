@@ -3181,6 +3181,7 @@ dependencies = [
  "bevy_mod_raycast",
  "iyes_loopless",
  "rand",
+ "serde_json",
 ]
 
 [[package]]

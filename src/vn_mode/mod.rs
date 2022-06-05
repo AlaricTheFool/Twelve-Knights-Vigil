@@ -1,8 +1,10 @@
 use crate::prelude::*;
 
+mod background;
 mod parser;
 mod scene;
 
+pub use background::*;
 pub use parser::*;
 pub use scene::*;
 
@@ -11,6 +13,7 @@ pub struct VNModePlugin;
 impl Plugin for VNModePlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(VNScene::new())
+            .add_startup_system(initialize_bg_asset_map)
             .add_enter_system(GameMode::VNMode, load_test_scene)
             .add_system(render_scene.run_in_state(GameMode::VNMode));
     }
