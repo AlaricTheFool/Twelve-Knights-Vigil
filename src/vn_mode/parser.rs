@@ -52,7 +52,7 @@ impl VNBracketParse {
 
     fn to_vn_parse_command(&self) -> Result<VNParseCommand, VNParseError> {
         match self.command.as_str() {
-            "DEFINE_SPEAKER" => {
+            "DEFINE" => {
                 self.has_args()?;
 
                 let arg_string = self.args.clone().unwrap();
@@ -79,7 +79,7 @@ impl VNBracketParse {
                 Ok(VNParseCommand::ChangeBackground(arg_string))
             }
 
-            "SCENE" | "SOUND_LOOP" => Ok(VNParseCommand::UnimplementedCommand(
+            "SOUND_LOOP" => Ok(VNParseCommand::UnimplementedCommand(
                 self.command.to_string(),
             )),
 
