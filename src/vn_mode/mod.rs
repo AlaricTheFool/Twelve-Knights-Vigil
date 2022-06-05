@@ -15,39 +15,65 @@ impl Plugin for VNModePlugin {
         app.insert_resource(VNScene::new())
             .add_startup_system(initialize_bg_asset_map)
             .add_enter_system(GameMode::VNMode, load_test_scene)
+            .add_enter_system(GameMode::VNMode, initialize_background)
+            .add_system(update_background.run_in_state(GameMode::VNMode))
+            .add_system_to_stage(
+                CoreStage::PreUpdate,
+                switch_backgrounds.run_in_state(GameMode::VNMode),
+            )
             .add_system(render_scene.run_in_state(GameMode::VNMode));
     }
 }
 
 fn load_test_scene(mut commands: Commands) {
     let scene = load_scene("test_scenes/test_dialogue").unwrap();
+    commands
+        .spawn()
+        .insert_bundle(OrthographicCameraBundle::new_2d());
     commands.insert_resource(VNScene::from_events(scene));
 }
 
-fn render_scene(mut scene: ResMut<VNScene>, mut egui_context: ResMut<EguiContext>) {
-    if let Some(event) = scene.current() {
-        let frame = egui::Frame::dark_canvas(&egui::Style::default());
-        match event {
-            VNEvent::Dialogue(speaker, line) => {
-                egui::Window::new("Dialogue")
-                    .title_bar(false)
-                    .auto_sized()
-                    .anchor(egui::Align2::CENTER_BOTTOM, egui::Vec2::new(0.0, -8.0))
-                    .frame(frame)
-                    .show(egui_context.ctx_mut(), |ui| {
-                        ui.vertical(|ui| {
-                            ui.label(egui::RichText::new(speaker.name).size(40.0));
-                            ui.separator();
-                            ui.label(egui::RichText::new(line).size(30.0));
+fn render_scene(
+    mut scene: ResMut<VNScene>,
+    mut egui_context: ResMut<EguiContext>,
+    mut commands: Commands,
+) {
+    let mut blocked = false;
 
-                            ui.add_space(30.0);
+    while !blocked {
+        if let Some(event) = scene.current() {
+            let frame = egui::Frame::dark_canvas(&egui::Style::default());
+            match event {
+                VNEvent::Dialogue(speaker, line) => {
+                    egui::Window::new("Dialogue")
+                        .title_bar(false)
+                        .auto_sized()
+                        .anchor(egui::Align2::CENTER_BOTTOM, egui::Vec2::new(0.0, -8.0))
+                        .frame(frame)
+                        .show(egui_context.ctx_mut(), |ui| {
+                            ui.vertical(|ui| {
+                                ui.label(egui::RichText::new(speaker.name).size(40.0));
+                                ui.separator();
+                                ui.label(egui::RichText::new(line).size(30.0));
 
-                            if ui.button(egui::RichText::new("Next").size(15.0)).clicked() {
-                                scene.next();
-                            }
+                                ui.add_space(30.0);
+
+                                if ui.button(egui::RichText::new("Next").size(15.0)).clicked() {
+                                    scene.next();
+                                }
+
+                                blocked = true;
+                            });
                         });
-                    });
+                }
+
+                VNEvent::ChangeBackground(new_bg) => {
+                    commands.insert_resource(NextBG(new_bg));
+                    scene.next();
+                }
             }
+        } else {
+            blocked = true;
         }
     }
 }
@@ -55,6 +81,7 @@ fn render_scene(mut scene: ResMut<VNScene>, mut egui_context: ResMut<EguiContext
 #[derive(Clone, Debug, PartialEq)]
 pub enum VNEvent {
     Dialogue(Speaker, String),
+    ChangeBackground(String),
 }
 
 #[derive(Clone, Debug, PartialEq)]

@@ -39,15 +39,21 @@ impl VNBracketParse {
         })
     }
 
+    fn has_args(&self) -> Result<(), VNParseError> {
+        if self.args.is_none() {
+            return Err(VNParseError::InvalidArguments(
+                self.command.to_owned(),
+                "no args provided".to_string(),
+            ));
+        }
+
+        Ok(())
+    }
+
     fn to_vn_parse_command(&self) -> Result<VNParseCommand, VNParseError> {
         match self.command.as_str() {
             "DEFINE_SPEAKER" => {
-                if self.args.is_none() {
-                    return Err(VNParseError::InvalidArguments(
-                        self.command.to_owned(),
-                        "no args provided".to_string(),
-                    ));
-                }
+                self.has_args()?;
 
                 let arg_string = self.args.clone().unwrap();
                 let args: Vec<&str> = arg_string.split("=>").map(|s| s.trim()).collect();
@@ -63,6 +69,14 @@ impl VNBracketParse {
                     args[1].to_string(),
                     args[0].to_string(),
                 ))
+            }
+
+            "SCENE" => {
+                self.has_args()?;
+
+                let arg_string = self.args.clone().unwrap();
+
+                Ok(VNParseCommand::ChangeBackground(arg_string))
             }
 
             "SCENE" | "SOUND_LOOP" => Ok(VNParseCommand::UnimplementedCommand(
@@ -97,6 +111,7 @@ impl VNBracketParse {
 pub enum VNParseCommand {
     SpeakerRename(String, String),
     DefineSpeaker(Speaker),
+    ChangeBackground(String),
     UnimplementedCommand(String),
 }
 
@@ -120,6 +135,10 @@ pub fn parse_text(input: &str) -> Result<Vec<VNEvent>, VNParseError> {
                 VNParseCommand::DefineSpeaker(new_speaker) => {
                     current_speaker = new_speaker;
                 },
+
+                VNParseCommand::ChangeBackground(new_bg_key) => {
+                    result.push(VNEvent::ChangeBackground(new_bg_key));
+                }
 
                 VNParseCommand::UnimplementedCommand(cmd) => {
                     error!("The command '{cmd}' has not yet been implemented but is a planned feature.");
