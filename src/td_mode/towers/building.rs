@@ -88,7 +88,7 @@ pub fn handle_build_tower_messages(
 pub fn handle_place_knight_messages(
     msg_query: Query<(Entity, &Message, &PlaceKnight, &Target)>,
     tower_query: Query<(Entity, &Tower, &Coordinate, &TowerType)>,
-    occupied_tower_query: Query<(Entity, &Tower, &Knight)>,
+    occupied_tower_query: Query<(Entity, &Tower, &Knight, &TowerType)>,
     mut commands: Commands,
     mut alerts: ResMut<SystemAlerts>,
     mut knight_statuses: ResMut<KnightStatuses>,
@@ -103,15 +103,19 @@ pub fn handle_place_knight_messages(
 
         if tower_on_tile.is_none() {
             result = Err("You must place a knight on top of an existing Tower.");
-        } else if knight_statuses.get_status(place_knight.knight) != KUsageStatus::Ready {
-            result = Err("You can't use that knight!");
         } else if occupied_tower_query.get(tower_on_tile.unwrap().0).is_ok() {
             result = Err("There's already a knight there.");
         }
 
         match result {
             Ok(_) => {
-                knight_statuses.set_status(place_knight.knight, KUsageStatus::InUse);
+                occupied_tower_query
+                    .iter()
+                    .filter(|(_, _, knight, _)| **knight == place_knight.knight)
+                    .for_each(|(e, _, knight, t_type)| {
+                        remove_knight_from_tower(e, *t_type, *knight, &mut commands)
+                    });
+
                 add_knight_to_tower(
                     tower_on_tile.unwrap().0,
                     *tower_on_tile.unwrap().1,

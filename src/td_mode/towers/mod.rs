@@ -2,16 +2,20 @@ use super::*;
 
 mod building;
 mod cooldown;
+mod knights;
 mod power_bar;
 mod projectiles;
 mod weapons;
 
-pub struct TowerPlugin;
 pub use self::cooldown::{spawn_cd_reset_message, Cooldown};
 use self::projectiles::*;
 pub use building::*;
 pub use power_bar::*;
 pub use weapons::*;
+
+use knights::*;
+
+pub struct TowerPlugin;
 
 impl Plugin for TowerPlugin {
     fn build(&self, app: &mut App) {

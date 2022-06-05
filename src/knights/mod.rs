@@ -7,7 +7,6 @@ pub use minigames::*;
 #[derive(Copy, Clone, PartialEq)]
 pub enum KUsageStatus {
     Ready,
-    InUse,
     Locked,
 }
 
@@ -66,44 +65,6 @@ impl Plugin for KnightPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(KnightStatuses::new())
             .add_system(reset_knights.run_if(respawn_message_received));
-    }
-}
-
-pub fn add_knight_to_tower(
-    entity: Entity,
-    tower_type: TowerType,
-    knight: Knight,
-    commands: &mut Commands,
-) {
-    info!("Adding knight {knight:?} to a tower.");
-    let mut e_commands = commands.entity(entity);
-    e_commands.insert(knight);
-
-    e_commands
-        .insert(Cooldown::new(0.5))
-        .insert(Damage(5))
-        .insert(Range::new(1.0))
-        .insert(Weapon)
-        .insert(PowerBar::new())
-        .insert(tic_tac_toe::TicTacToe::new())
-        .insert(ProjectileSpawnPoint(Vec3::Y * 2.0));
-
-    match (knight, tower_type) {
-        (Knight::Normal, TowerType::Short) => {
-            e_commands
-                .insert(ProjectileSpawnPoint(Vec3::Y * 0.5))
-                .insert(Multishot(10));
-        }
-
-        (Knight::Normal, TowerType::Medium) => {
-            e_commands.insert(Homing).insert(Range::new(3.0));
-        }
-
-        (Knight::Normal, TowerType::Tall) => {
-            e_commands.insert(Explosive(Range::new(0.5)));
-        }
-
-        _ => error!("Did not implement tower type: {tower_type:?} for knight: {knight:?}"),
     }
 }
 
