@@ -127,11 +127,7 @@ pub fn spawn_tower(
         ))
         .with_children(|p| {
             p.spawn()
-                .insert_bundle(TransformBundle::from_transform(
-                    Transform::identity()
-                        .with_scale(Vec3::ONE * 0.5)
-                        .with_translation(Vec3::Y * 0.20),
-                ))
+                .insert_bundle(TransformBundle::identity())
                 .with_children(|p| {
                     let model = match t_type {
                         TowerType::Short => models.short.clone(),
