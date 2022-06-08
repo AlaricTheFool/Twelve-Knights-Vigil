@@ -20,6 +20,14 @@ struct VNBracketParse {
 }
 
 impl VNBracketParse {
+    fn arg_error(&self) -> VNParseError {
+        if self.args.is_some() {
+            VNParseError::InvalidArguments(self.command.clone(), self.args.clone().unwrap())
+        } else {
+            VNParseError::InvalidArguments(self.command.clone(), "NO ARGS PROVIDED".to_string())
+        }
+    }
+
     fn parse_line(input: &str) -> Result<Self, VNParseError> {
         if !is_bracketed(input) {
             return Err(VNParseError::MismatchedBrackets(input.to_string()));
@@ -79,7 +87,25 @@ impl VNBracketParse {
                 Ok(VNParseCommand::ChangeBackground(arg_string))
             }
 
-            "SOUND_LOOP" => Ok(VNParseCommand::UnimplementedCommand(
+            "APPEAR" => {
+                self.has_args()?;
+
+                let arg_string = self.args.clone().unwrap();
+
+                let side = match arg_string.as_str() {
+                    "LEFT" => Side::Left,
+                    "RIGHT" => Side::Right,
+                    _ => {
+                        return Err(self.arg_error());
+                    }
+                };
+
+                Ok(VNParseCommand::SpeakerDisplayEvent(SpeakerEvent::Appear(
+                    side,
+                )))
+            }
+
+            "SOUND_LOOP" | "HIDE" => Ok(VNParseCommand::UnimplementedCommand(
                 self.command.to_string(),
             )),
 
@@ -112,6 +138,7 @@ pub enum VNParseCommand {
     SpeakerRename(String, String),
     DefineSpeaker(Speaker),
     ChangeBackground(String),
+    SpeakerDisplayEvent(SpeakerEvent),
     UnimplementedCommand(String),
 }
 
@@ -138,6 +165,10 @@ pub fn parse_text(input: &str) -> Result<Vec<VNEvent>, VNParseError> {
 
                 VNParseCommand::ChangeBackground(new_bg_key) => {
                     result.push(VNEvent::ChangeBackground(new_bg_key));
+                }
+
+                VNParseCommand::SpeakerDisplayEvent(event) => {
+                    result.push(VNEvent::ChangeSpeakerDisplay(current_speaker.clone(), event));
                 }
 
                 VNParseCommand::UnimplementedCommand(cmd) => {

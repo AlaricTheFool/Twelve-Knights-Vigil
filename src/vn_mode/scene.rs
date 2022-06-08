@@ -1,8 +1,14 @@
 use super::*;
 
+pub struct DisplayedSpeaker {
+    speaker: Speaker,
+    side: Side,
+}
+
 pub struct VNScene {
     current_event: usize,
     events: Vec<VNEvent>,
+    displayed_speakers: Vec<DisplayedSpeaker>,
 }
 
 impl VNScene {
@@ -10,6 +16,7 @@ impl VNScene {
         Self {
             current_event: 0,
             events: Vec::new(),
+            displayed_speakers: Vec::new(),
         }
     }
 
@@ -17,6 +24,7 @@ impl VNScene {
         Self {
             current_event: 0,
             events,
+            displayed_speakers: Vec::new(),
         }
     }
 
@@ -26,6 +34,19 @@ impl VNScene {
         }
 
         Some(self.events[self.current_event].clone())
+    }
+
+    pub fn show_speaker(&mut self, speaker: Speaker, side: Side) {
+        if let Some(mut existing) = self
+            .displayed_speakers
+            .iter_mut()
+            .find(|s_display| s_display.speaker == speaker)
+        {
+            existing.side = side;
+        } else {
+            self.displayed_speakers
+                .push(DisplayedSpeaker { speaker, side });
+        }
     }
 }
 

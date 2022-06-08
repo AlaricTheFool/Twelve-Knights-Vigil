@@ -3,10 +3,12 @@ use crate::prelude::*;
 mod background;
 mod parser;
 mod scene;
+mod speakers;
 
 pub use background::*;
 pub use parser::*;
 pub use scene::*;
+pub use speakers::*;
 
 pub struct VNModePlugin;
 
@@ -71,6 +73,14 @@ fn render_scene(
                     commands.insert_resource(NextBG(new_bg));
                     scene.next();
                 }
+
+                VNEvent::ChangeSpeakerDisplay(speaker, speaker_event) => {
+                    match speaker_event {
+                        SpeakerEvent::Appear(side) => scene.show_speaker(speaker, side),
+                        SpeakerEvent::Hide => {}
+                    }
+                    scene.next();
+                }
             }
         } else {
             blocked = true;
@@ -81,7 +91,20 @@ fn render_scene(
 #[derive(Clone, Debug, PartialEq)]
 pub enum VNEvent {
     Dialogue(Speaker, String),
+    ChangeSpeakerDisplay(Speaker, SpeakerEvent),
     ChangeBackground(String),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum SpeakerEvent {
+    Appear(Side),
+    Hide,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum Side {
+    Left,
+    Right,
 }
 
 #[derive(Clone, Debug, PartialEq)]

@@ -5,9 +5,12 @@
 [SOUND_LOOP: BIRD_FX_1]
 
 [A]
+[APPEAR: RIGHT]
 You're finally awake.
+[HIDE]
 
 [P]
+[APPEAR: LEFT]
 Nngh
 
 [SCENE: CUTEDOGGO]
