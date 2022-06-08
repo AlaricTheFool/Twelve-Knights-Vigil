@@ -88,7 +88,7 @@ pub fn handle_build_tower_messages(
 pub fn handle_place_knight_messages(
     msg_query: Query<(Entity, &Message, &PlaceKnight, &Target)>,
     tower_query: Query<(Entity, &Tower, &Coordinate, &TowerType)>,
-    occupied_tower_query: Query<(Entity, &Tower, &Knight, &TowerType)>,
+    occupied_tower_query: Query<(Entity, &Tower, &Knight, &TowerType, &GlobalTransform)>,
     mut commands: Commands,
     mut alerts: ResMut<SystemAlerts>,
     mut knight_statuses: ResMut<KnightStatuses>,
@@ -109,19 +109,22 @@ pub fn handle_place_knight_messages(
 
         match result {
             Ok(_) => {
+                let mut start_point = Transform::identity();
                 occupied_tower_query
                     .iter()
-                    .filter(|(_, _, knight, _)| **knight == place_knight.knight)
-                    .for_each(|(e, _, knight, t_type)| {
+                    .filter(|(_, _, knight, _, _)| **knight == place_knight.knight)
+                    .for_each(|(e, _, knight, t_type, tform)| {
+                        start_point = Transform::from_translation(tform.translation);
                         remove_knight_from_tower(e, *t_type, *knight, &mut commands)
                     });
-
-                add_knight_to_tower(
-                    tower_on_tile.unwrap().0,
-                    *tower_on_tile.unwrap().1,
-                    place_knight.knight,
+                info!("{start_point:?}");
+                spawn_traveling_knight(
                     &mut commands,
+                    place_knight.knight,
+                    start_point,
+                    tower_on_tile.unwrap().0,
                 );
+                knight_statuses.set_status(place_knight.knight, KUsageStatus::Busy);
             }
 
             Err(msg) => {

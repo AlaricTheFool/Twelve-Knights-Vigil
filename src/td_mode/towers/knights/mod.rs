@@ -1,6 +1,19 @@
 use super::*;
 use crate::knights::tic_tac_toe::*;
 
+mod traveling_knight;
+
+pub use traveling_knight::*;
+
+pub struct TDKnightPlugin;
+
+impl Plugin for TDKnightPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_plugin(TravelingKnightPlugin)
+            .add_system(add_knight_bundles_to_towers);
+    }
+}
+
 #[derive(Bundle)]
 pub struct NormalKnightBaseBundle {
     cd: Cooldown,
@@ -82,31 +95,29 @@ impl NormalKnightTallTowerBundle {
     }
 }
 
-pub fn add_knight_to_tower(
-    entity: Entity,
-    tower_type: TowerType,
-    knight: Knight,
-    commands: &mut Commands,
+fn add_knight_bundles_to_towers(
+    t_query: Query<(Entity, &Knight, &TowerType), (With<Tower>, Added<Knight>)>,
+    mut commands: Commands,
 ) {
-    info!("Adding knight {knight:?} to a tower.");
-    let mut e_commands = commands.entity(entity);
-    e_commands.insert(knight);
+    t_query.iter().for_each(|(e, knight, tower_type)| {
+        info!("Adding knight {knight:?} to a tower.");
+        let mut e_commands = commands.entity(e);
+        match (knight, tower_type) {
+            (Knight::Normal, TowerType::Short) => {
+                e_commands.insert_bundle(NormalKnightShortTowerBundle::new());
+            }
 
-    match (knight, tower_type) {
-        (Knight::Normal, TowerType::Short) => {
-            e_commands.insert_bundle(NormalKnightShortTowerBundle::new());
+            (Knight::Normal, TowerType::Medium) => {
+                e_commands.insert_bundle(NormalKnightMediumTowerBundle::new());
+            }
+
+            (Knight::Normal, TowerType::Tall) => {
+                e_commands.insert_bundle(NormalKnightTallTowerBundle::new());
+            }
+
+            _ => error!("Did not implement tower type: {tower_type:?} for knight: {knight:?}"),
         }
-
-        (Knight::Normal, TowerType::Medium) => {
-            e_commands.insert_bundle(NormalKnightMediumTowerBundle::new());
-        }
-
-        (Knight::Normal, TowerType::Tall) => {
-            e_commands.insert_bundle(NormalKnightTallTowerBundle::new());
-        }
-
-        _ => error!("Did not implement tower type: {tower_type:?} for knight: {knight:?}"),
-    }
+    });
 }
 
 pub fn remove_knight_from_tower(

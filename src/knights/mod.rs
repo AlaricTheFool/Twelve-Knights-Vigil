@@ -7,6 +7,7 @@ pub use minigames::*;
 #[derive(Copy, Clone, PartialEq)]
 pub enum KUsageStatus {
     Ready,
+    Busy,
     Locked,
 }
 

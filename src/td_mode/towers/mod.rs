@@ -13,7 +13,7 @@ pub use building::*;
 pub use power_bar::*;
 pub use weapons::*;
 
-use knights::*;
+pub use knights::*;
 
 pub struct TowerPlugin;
 
@@ -21,6 +21,7 @@ impl Plugin for TowerPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(initialize_tower_models)
             .add_plugin(cooldown::CDPlugin)
+            .add_plugin(knights::TDKnightPlugin)
             .add_plugin(power_bar::PowerBarPlugin)
             .add_plugin(projectiles::ProjectilePlugin)
             .add_system(
