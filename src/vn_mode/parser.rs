@@ -104,8 +104,9 @@ impl VNBracketParse {
                     side,
                 )))
             }
+            "HIDE" => Ok(VNParseCommand::SpeakerDisplayEvent(SpeakerEvent::Hide)),
 
-            "SOUND_LOOP" | "HIDE" => Ok(VNParseCommand::UnimplementedCommand(
+            "SOUND_LOOP" => Ok(VNParseCommand::UnimplementedCommand(
                 self.command.to_string(),
             )),
 

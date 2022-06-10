@@ -7,7 +7,6 @@
 [A]
 [APPEAR: RIGHT]
 You're finally awake.
-[HIDE]
 
 [P]
 [APPEAR: LEFT]
@@ -17,6 +16,7 @@ Nngh
 
 [A]
 The wave, it's coming soon. You must wake up.
+[HIDE]
 
 [NARRATOR]
 You feel something fall on your face, you open your eyes and you feel the sting of crumbs.

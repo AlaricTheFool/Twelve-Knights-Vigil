@@ -1,3 +1,7 @@
+//! A 3D Tower Defense Game Starring 12 strange characters
+
+#![warn(clippy::missing_docs, clippy::all, clippy::pedantic)]
+
 mod cheats;
 mod coordinate;
 mod gamemode;

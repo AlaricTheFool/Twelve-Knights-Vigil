@@ -1,8 +1,9 @@
 use super::*;
 
+#[derive(Clone)]
 pub struct DisplayedSpeaker {
-    speaker: Speaker,
-    side: Side,
+    pub speaker: Speaker,
+    pub side: Side,
 }
 
 pub struct VNScene {
@@ -47,6 +48,28 @@ impl VNScene {
             self.displayed_speakers
                 .push(DisplayedSpeaker { speaker, side });
         }
+    }
+
+    pub fn remove_speaker(&mut self, speaker: Speaker) {
+        self.displayed_speakers = self
+            .displayed_speakers
+            .iter()
+            .filter_map(|d_speaker| {
+                if d_speaker.speaker != speaker {
+                    Some(d_speaker.clone())
+                } else {
+                    None
+                }
+            })
+            .collect();
+    }
+
+    pub fn speaker_count(&self) -> usize {
+        self.displayed_speakers.len()
+    }
+
+    pub fn speakers(&self) -> &Vec<DisplayedSpeaker> {
+        &self.displayed_speakers
     }
 }
 

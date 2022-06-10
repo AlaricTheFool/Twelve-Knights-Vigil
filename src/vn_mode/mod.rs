@@ -14,7 +14,8 @@ pub struct VNModePlugin;
 
 impl Plugin for VNModePlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(VNScene::new())
+        app.add_plugin(SpeakerPlugin)
+            .insert_resource(VNScene::new())
             .add_startup_system(initialize_bg_asset_map)
             .add_enter_system(GameMode::VNMode, load_test_scene)
             .add_enter_system(GameMode::VNMode, initialize_background)
@@ -77,7 +78,10 @@ fn render_scene(
                 VNEvent::ChangeSpeakerDisplay(speaker, speaker_event) => {
                     match speaker_event {
                         SpeakerEvent::Appear(side) => scene.show_speaker(speaker, side),
-                        SpeakerEvent::Hide => {}
+                        SpeakerEvent::Hide => {
+                            info!("Hiding Speaker");
+                            scene.remove_speaker(speaker);
+                        }
                     }
                     scene.next();
                 }
@@ -107,7 +111,7 @@ pub enum Side {
     Right,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Hash, Eq)]
 pub struct Speaker {
     name: String,
 }
