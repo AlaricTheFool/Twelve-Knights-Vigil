@@ -1,6 +1,6 @@
 [ ] BUGFIX: Fix the stuttering on tower ui when you click a tic tac toe tile
-[ ] Make power bar decrease over time
-[ ] Generate Tic Tac Toe Boards that are 1 and 2 moves away from victory
+[X] Make power bar decrease over time
+[X] Generate Tic Tac Toe Boards that are 1 and 2 moves away from victory
 
 [ ] Animations
 [ ] Tower Rotation towards targets

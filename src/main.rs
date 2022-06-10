@@ -1,4 +1,12 @@
 //! A 3D Tower Defense Game Starring 12 strange characters
+//!
+//! [ ] Implement Swole Knight Minigame
+//! [ ] Implement Normal Knight Tall Tower
+//! [ ] Design Swole Knight Towers
+//! [ ] Design Lizard Knight Minigame
+//! [ ] Implement Lizard Knight Minigame
+//!
+//! [ ] Make a Discord Bot that controls the game.
 
 #![warn(clippy::missing_docs, clippy::all, clippy::pedantic)]
 
