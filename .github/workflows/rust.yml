@@ -1,4 +1,8 @@
-name: Rust
+name: Latest Dev Build Github Release
+on:
+  push:
+    branches:
+      - master
 
 env:
   CARGO_TERM_COLOR: always
