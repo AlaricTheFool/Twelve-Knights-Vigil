@@ -1,0 +1,19 @@
+name: Build and Post Github Releases
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install alsa and udev
+        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
+      - uses: actions/checkout@v3
+      - name: Run Tests
+        run: cargo test --verbose
+      - name: Build
+        run: cargo build --verbose --release --target x86_64-unknown-linux-gnu
+
