@@ -1,47 +1,10 @@
 name: Rust
 
-on:
-  schedule:
-    - cron: '* 4 * * *'
-
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  check_date:
-    runs-on: ubuntu-latest
-    name: Check latest commit
-    outputs:
-      should_run: ${{ steps.should_run.outputs.should_run }}
-    steps:
-      - uses: actions/checkout@v2
-      - name: print latest_commit
-        run: echo ${{ github.sha }}
-
-      - id: should_run
-        continue-on-error: true
-        name: check latest commit is less than a day ago
-        if: ${{ github.event_name == 'schedule' }}
-        run: test -z $(git rev-list --after="24 hours" ${{ github.sha }}) && echo "::set-output name=should_run::false"
-
-  create-release:
-    needs: check_date
-    if: ${{ needs.check_date.outputs.should_run != 'false' }}
-
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: taiki-e/create-gh-release-action@v1
-        with:
-          draft: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  build:
-    needs: 
-      - check_date
-      - create-release
-    if: ${{ needs.check_date.outputs.should_run != 'false' }}
+  test:
     runs-on: ubuntu-latest
 
     steps:
@@ -56,3 +19,14 @@ jobs:
       uses: taiki-e/upload-rust-binary-action@v1.3.0
       with:
         bin: twelve-knights-vigil
+
+  create-release:
+    needs: test
+
+    runs-on: ubuntu-latest
+    steps:
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "{{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
+          title: "Development Build"
