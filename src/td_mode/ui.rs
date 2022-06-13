@@ -78,6 +78,7 @@ fn draw_tower_inspector_ui(
     knight_query: Query<&Knight>,
     power_bar_query: Query<&PowerBar>,
     tic_tac_toe_query: Query<&tic_tac_toe::TicTacToe>,
+    smoothie_mix_query: Query<&smoothie_mix::SmoothieMix>,
     damage_query: Query<&Damage>,
     cd_query: Query<&Cooldown>,
     mut commands: Commands,
@@ -101,6 +102,10 @@ fn draw_tower_inspector_ui(
                 if let Ok(tic_tac_toe) = tic_tac_toe_query.get(selected_entity) {
                     if let Some(played_move_board) = tic_tac_toe.render_egui(ui) {
                         commands.entity(selected_entity).insert(played_move_board);
+                    }
+                } else if let Ok(smoothie_mix) = smoothie_mix_query.get(selected_entity) {
+                    if let Some(new_smoothie_mix) = smoothie_mix.render_egui(ui) {
+                        commands.entity(selected_entity).insert(new_smoothie_mix);
                     }
                 }
 

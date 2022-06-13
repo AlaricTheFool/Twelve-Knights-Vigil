@@ -28,13 +28,26 @@ pub enum Player {
 #[derive(Debug, PartialEq, Copy, Clone)]
 enum GameState {
     InProgress(Player),
-    GameEnded(GameResult),
+    GameEnded(TicTacToeResult),
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]
-pub enum GameResult {
+pub enum TicTacToeResult {
     Victory(Player),
     Draw,
+}
+
+impl From<TicTacToeResult> for GameResult {
+    fn from(result: TicTacToeResult) -> Self {
+        match result {
+            TicTacToeResult::Victory(player) => match player {
+                Player::X => GameResult::Victory,
+                Player::O => GameResult::Defeat,
+            },
+
+            TicTacToeResult::Draw => GameResult::Draw,
+        }
+    }
 }
 
 #[derive(Component, Clone, Copy)]
@@ -107,7 +120,7 @@ impl TicTacToe {
         }
     }
 
-    pub fn is_game_over(&self) -> Option<GameResult> {
+    pub fn is_game_over(&self) -> Option<TicTacToeResult> {
         //Check Rows
         if let Some(winner) = (0..3).find_map(|y| {
             let start_idx = y * 3;
@@ -115,7 +128,7 @@ impl TicTacToe {
 
             TicTacToe::check_winning_trio([slice[0], slice[1], slice[2]])
         }) {
-            return Some(GameResult::Victory(winner));
+            return Some(TicTacToeResult::Victory(winner));
         }
 
         // Check Columns
@@ -126,7 +139,7 @@ impl TicTacToe {
 
             TicTacToe::check_winning_trio([top, mid, bot])
         }) {
-            return Some(GameResult::Victory(winner));
+            return Some(TicTacToeResult::Victory(winner));
         }
 
         // Check Main Diagonal
@@ -135,7 +148,7 @@ impl TicTacToe {
         let br = self.get_cell(2, 2).unwrap();
 
         if let Some(winner) = TicTacToe::check_winning_trio([tl, center, br]) {
-            return Some(GameResult::Victory(winner));
+            return Some(TicTacToeResult::Victory(winner));
         }
 
         // Check Reverse Diagonal
@@ -143,11 +156,11 @@ impl TicTacToe {
         let bl = self.get_cell(0, 2).unwrap();
 
         if let Some(winner) = TicTacToe::check_winning_trio([tr, center, bl]) {
-            return Some(GameResult::Victory(winner));
+            return Some(TicTacToeResult::Victory(winner));
         }
 
         if !self.board.contains(&BoardCell::Empty) {
-            return Some(GameResult::Draw);
+            return Some(TicTacToeResult::Draw);
         }
 
         None
@@ -306,7 +319,7 @@ mod tests {
 
         assert_eq!(
             game.game_state,
-            GameState::GameEnded(GameResult::Victory(Player::X))
+            GameState::GameEnded(TicTacToeResult::Victory(Player::X))
         );
 
         let game_over_error = game.play_square(Coordinate::new(2, 2));
@@ -329,7 +342,7 @@ mod tests {
 
         assert_eq!(
             game.game_state,
-            GameState::GameEnded(GameResult::Victory(Player::X))
+            GameState::GameEnded(TicTacToeResult::Victory(Player::X))
         );
 
         Ok(())
@@ -350,7 +363,7 @@ mod tests {
 
         assert_eq!(
             game.game_state,
-            GameState::GameEnded(GameResult::Victory(Player::O))
+            GameState::GameEnded(TicTacToeResult::Victory(Player::O))
         );
 
         Ok(())
@@ -368,7 +381,7 @@ mod tests {
 
         assert_eq!(
             game.game_state,
-            GameState::GameEnded(GameResult::Victory(Player::X))
+            GameState::GameEnded(TicTacToeResult::Victory(Player::X))
         );
 
         Ok(())
@@ -386,7 +399,7 @@ mod tests {
 
         assert_eq!(
             game.game_state,
-            GameState::GameEnded(GameResult::Victory(Player::X))
+            GameState::GameEnded(TicTacToeResult::Victory(Player::X))
         );
 
         Ok(())
@@ -420,7 +433,7 @@ mod tests {
 
         assert_eq!(
             game.game_state,
-            GameState::GameEnded(GameResult::Draw),
+            GameState::GameEnded(TicTacToeResult::Draw),
             "This game state should be a draw. \n{}",
             game.get_as_string()
         );

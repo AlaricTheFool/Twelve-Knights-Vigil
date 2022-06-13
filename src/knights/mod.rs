@@ -40,7 +40,7 @@ impl KnightStatuses {
     fn new() -> Self {
         Self(BTreeMap::from([
             (Knight::Normal, KUsageStatus::Ready),
-            (Knight::Swole, KUsageStatus::Locked),
+            (Knight::Swole, KUsageStatus::Ready),
             (Knight::Lizard, KUsageStatus::Locked),
             (Knight::Banner, KUsageStatus::Locked),
             (Knight::Dungeon, KUsageStatus::Locked),

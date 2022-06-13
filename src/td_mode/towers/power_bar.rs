@@ -92,12 +92,9 @@ fn normal_knight_minigame_power_boost(
     use tic_tac_toe::*;
     tower_query.iter_mut().for_each(|(entity, mut bar, game)| {
         if let Some(game_result) = game.is_game_over() {
-            match game_result {
-                GameResult::Victory(player) => {
-                    match player {
-                        Player::X => bar.increase(25),
-                        _ => {}
-                    };
+            match GameResult::from(game_result) {
+                GameResult::Victory => {
+                    bar.increase(25);
                 }
 
                 _ => {}

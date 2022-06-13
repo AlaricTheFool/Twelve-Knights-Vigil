@@ -1,6 +1,7 @@
 use super::*;
-use crate::knights::tic_tac_toe::*;
+use crate::{knights::tic_tac_toe::*, td_mode::towers::knights::muscle::MuscleKnightBaseBundle};
 
+mod muscle;
 mod traveling_knight;
 
 pub use traveling_knight::*;
@@ -113,6 +114,10 @@ fn add_knight_bundles_to_towers(
 
             (Knight::Normal, TowerType::Tall) => {
                 e_commands.insert_bundle(NormalKnightTallTowerBundle::new());
+            }
+
+            (Knight::Swole, _) => {
+                e_commands.insert_bundle(MuscleKnightBaseBundle::new());
             }
 
             _ => error!("Did not implement tower type: {tower_type:?} for knight: {knight:?}"),
