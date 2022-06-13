@@ -35,5 +35,11 @@ jobs:
       - test-and-build
 
     steps:
-      - name: Install alsa and udev
-        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
+      - name: Download Linux Build
+        uses: actions/download-artifact@v3
+        with:
+          name: linux-latest
+      - name: Create release
+        run: gh release create latest linux-latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
