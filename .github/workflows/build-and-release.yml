@@ -23,7 +23,7 @@ jobs:
       - name: Zip
         run: zip -D -r linux-latest.zip target/x86_64-unknown-linux-gnu/release/*
       - name: Upload Artifact
-        run: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v3
         with:
           name: linux-latest
           path: linux-latest.zip
