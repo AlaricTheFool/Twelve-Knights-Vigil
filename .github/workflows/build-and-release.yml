@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Create release
-        run: gh release --target master create latest 
+        run: gh release create other-tag 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
