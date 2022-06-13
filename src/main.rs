@@ -2,7 +2,11 @@
 //!
 //! [ ] Implement Swole Knight Minigame
 //! [ ] Implement Normal Knight Tall Tower
-//! [ ] Design Swole Knight Towers
+//! [X] Design Swole Knight Towers
+//!     Short: Shove -> Damage and Big Knockback
+//!     Medium: Big Fist Smack Ground -> AOE damage and weaker (relative to short) knockback
+//!     Tall: Set a target location on the map. Pick up single enemies and throw em. (Distance
+//!     based on power bar.)
 //! [ ] Design Lizard Knight Minigame
 //! [ ] Implement Lizard Knight Minigame
 //!
