@@ -17,9 +17,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Update Tag
-        run: 
-          - git tag other-tag -f
-          - git push --tags -f
+        run: git tag other-tag -f && git push --tags -f
       - name: Create release
         run: gh release create other-tag  
         env:
