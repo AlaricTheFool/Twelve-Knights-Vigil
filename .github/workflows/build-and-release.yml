@@ -5,6 +5,18 @@ on:
       - master
 
 jobs:
+  placeholder-release-make:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Create release
+        run: gh release create latest linux-latest.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   test-and-build:
     runs-on: ubuntu-latest
 
