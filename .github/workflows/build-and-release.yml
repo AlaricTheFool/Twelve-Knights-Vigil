@@ -40,6 +40,6 @@ jobs:
         with:
           name: linux-latest
       - name: Create release
-        run: gh release create latest linux-latest
+        run: gh release create latest linux-latest.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
