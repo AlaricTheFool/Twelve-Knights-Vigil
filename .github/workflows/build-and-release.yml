@@ -12,8 +12,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+      - name: Delete Previous Release
+        run: gh release delete other-tag -y
       - name: Create release
-        run: gh release edit other-tag --target master 
+        run: gh release create other-tag  
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
