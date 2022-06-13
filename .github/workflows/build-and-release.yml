@@ -16,6 +16,8 @@ jobs:
         run: gh release delete other-tag -y
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Update Tag
+        run: git tag other-tag -f
       - name: Create release
         run: gh release create other-tag  
         env:
