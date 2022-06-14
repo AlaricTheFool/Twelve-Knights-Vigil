@@ -218,7 +218,7 @@ impl TicTacToe {
         (0..3).find_map(|y| {
             let mut result = None;
             ui.horizontal(|ui| {
-                result = (0..3).find_map(|x| {
+                (0..3).for_each(|x| {
                     let tile = self.get_cell(x, y).unwrap();
                     let btn_text = tile.to_btn_text();
 
@@ -227,11 +227,9 @@ impl TicTacToe {
 
                         let coord = Coordinate::new(x, y);
                         if let Ok(move_played_board) = self.with_next_move(coord) {
-                            return Some(move_played_board);
+                            result = Some(move_played_board);
                         }
                     }
-
-                    None
                 });
             });
 
