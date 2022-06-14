@@ -43,8 +43,8 @@ jobs:
     needs: test
 
     steps:
-      - name: Install alsa and udev
-        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
+      - name: Install alsa and udev and mingw
+        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev mingw-w64
       - uses: actions/checkout@v3
       - name: Add windows target to Rust
         run: rustup target add x86_64-pc-windows-gnu
