@@ -1,6 +1,6 @@
 //! A 3D Tower Defense Game Starring 12 strange characters
 //!
-//! [ ] Implement Swole Knight Minigame
+//! [X] Implement Swole Knight Minigame
 //! [ ] Implement Normal Knight Tall Tower
 //! [X] Design Swole Knight Towers
 //!     Short: Shove -> Damage and Big Knockback
