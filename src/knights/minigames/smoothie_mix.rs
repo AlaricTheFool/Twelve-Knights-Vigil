@@ -3,15 +3,15 @@ use super::*;
 #[derive(Component, Clone)]
 pub struct SmoothieMix {
     game_state: GameState,
-    recipe: Vec<CookingActions>,
-    current_mix: Vec<CookingActions>,
+    recipe: Vec<CookingAction>,
+    current_mix: Vec<CookingAction>,
 }
 
 impl SmoothieMix {
     pub fn new() -> Self {
         Self {
             game_state: GameState::Mixing,
-            recipe: Vec::new(),
+            recipe: CookingAction::generate_random_recipe(3),
             current_mix: Vec::new(),
         }
     }
@@ -20,6 +20,20 @@ impl SmoothieMix {
         let mut result = self.clone();
         result.game_state = state;
         result
+    }
+
+    fn with_added_action(&self, action: CookingAction) -> Self {
+        let mut result = self.clone();
+        result.current_mix.push(action);
+        result
+    }
+
+    fn get_recipe_text(&self) -> String {
+        self.recipe
+            .iter()
+            .map(|action| action.to_recipe_line(1))
+            .collect::<Vec<String>>()
+            .join("\n")
     }
 }
 
@@ -31,8 +45,20 @@ enum GameState {
 }
 
 #[derive(Clone, Copy, PartialEq)]
-enum CookingActions {
+enum CookingAction {
     AddIngredient(Ingredient),
+}
+
+impl CookingAction {
+    fn generate_random_recipe(steps: usize) -> Vec<CookingAction> {
+        (0..steps)
+            .map(|_| CookingAction::AddIngredient(Ingredient::ProteinPowder))
+            .collect()
+    }
+
+    fn to_recipe_line(&self, count: usize) -> String {
+        format!("Add {} tablespoon(s) of protein powder.", count)
+    }
 }
 
 #[derive(Clone, Copy, PartialEq)]
@@ -40,6 +66,24 @@ enum Ingredient {
     ProteinPowder,
     Banana,
     Oats,
+}
+
+impl Ingredient {
+    fn all() -> [Ingredient; 3] {
+        [
+            Ingredient::ProteinPowder,
+            Ingredient::Banana,
+            Ingredient::Oats,
+        ]
+    }
+
+    fn display_name(&self) -> &str {
+        match *self {
+            Ingredient::ProteinPowder => "Protein Powder",
+            Ingredient::Banana => "Banana",
+            Ingredient::Oats => "Oats",
+        }
+    }
 }
 
 impl KnightMinigame for SmoothieMix {
@@ -53,13 +97,17 @@ impl KnightMinigame for SmoothieMix {
             }
         }
 
+        let mut result = None;
         if show_recipe {
-            ui.label("First do the thing\nThen do the other thing\nThen do the next thing");
+            ui.label(self.get_recipe_text());
         } else {
             ui.horizontal(|ui| {
-                ui.button("Protein Powder");
-                ui.button("Banana");
-                ui.button("Oats");
+                Ingredient::all().iter().for_each(|ingredient| {
+                    if ui.button(ingredient.display_name()).clicked() {
+                        result =
+                            Some(self.with_added_action(CookingAction::AddIngredient(*ingredient)));
+                    }
+                })
             });
 
             ui.horizontal(|ui| {
@@ -72,7 +120,7 @@ impl KnightMinigame for SmoothieMix {
             ui.button("Start Over");
         }
 
-        None
+        result
     }
 
     fn get_game_result(&self) -> Option<GameResult> {
