@@ -35,6 +35,12 @@ impl SmoothieMix {
             .collect::<Vec<String>>()
             .join("\n")
     }
+
+    fn with_empty_mix(&self) -> Self {
+        let mut res = self.clone();
+        res.current_mix = Vec::new();
+        res
+    }
 }
 
 #[derive(Clone, Copy, PartialEq)]
@@ -47,17 +53,47 @@ enum GameState {
 #[derive(Clone, Copy, PartialEq)]
 enum CookingAction {
     AddIngredient(Ingredient),
+    UseTechnique(Technique),
 }
 
 impl CookingAction {
     fn generate_random_recipe(steps: usize) -> Vec<CookingAction> {
+        use rand::seq::SliceRandom;
         (0..steps)
-            .map(|_| CookingAction::AddIngredient(Ingredient::ProteinPowder))
+            .map(|_| match thread_rng().gen_range(0..=1) {
+                0 => {
+                    let mut ingredients = Ingredient::all();
+                    ingredients.shuffle(&mut thread_rng());
+                    let ingredient = ingredients[0];
+                    CookingAction::AddIngredient(ingredient)
+                }
+                1 => {
+                    let mut techniques = Technique::all();
+                    techniques.shuffle(&mut thread_rng());
+                    let technique = techniques[0];
+                    CookingAction::UseTechnique(technique)
+                }
+                _ => {
+                    unreachable!()
+                }
+            })
             .collect()
     }
 
     fn to_recipe_line(&self, count: usize) -> String {
-        format!("Add {} tablespoon(s) of protein powder.", count)
+        match *self {
+            CookingAction::AddIngredient(ingredient) => match ingredient {
+                Ingredient::ProteinPowder => format!("Add {count} tablespoons of Protein Powder"),
+                Ingredient::Banana => format!("Add {count} bananas"),
+                Ingredient::Oats => format!("Add {count} cups of oats"),
+            },
+
+            CookingAction::UseTechnique(technique) => match technique {
+                Technique::Blend => format!("Run Blender {count} times"),
+                Technique::Shake => format!("Shake Firmly {count} times"),
+                Technique::Stir => format!("Stir {count} times"),
+            },
+        }
     }
 }
 
@@ -82,6 +118,27 @@ impl Ingredient {
             Ingredient::ProteinPowder => "Protein Powder",
             Ingredient::Banana => "Banana",
             Ingredient::Oats => "Oats",
+        }
+    }
+}
+
+#[derive(Clone, Copy, PartialEq)]
+enum Technique {
+    Blend,
+    Shake,
+    Stir,
+}
+
+impl Technique {
+    fn all() -> [Technique; 3] {
+        [Technique::Blend, Technique::Shake, Technique::Stir]
+    }
+
+    fn display_name(&self) -> &str {
+        match *self {
+            Technique::Blend => "Blend",
+            Technique::Shake => "Shake",
+            Technique::Stir => "Stir",
         }
     }
 }
@@ -111,13 +168,20 @@ impl KnightMinigame for SmoothieMix {
             });
 
             ui.horizontal(|ui| {
-                ui.button("Shake");
-                ui.button("Stir");
-                ui.button("Blend");
+                Technique::all().iter().for_each(|technique| {
+                    if ui.button(technique.display_name()).clicked() {
+                        result =
+                            Some(self.with_added_action(CookingAction::UseTechnique(*technique)));
+                    }
+                })
             });
 
-            ui.button("Serve");
-            ui.button("Start Over");
+            if ui.button("Serve").clicked() {
+                result = Some(self.with_state(GameState::Finished));
+            }
+            if ui.button("Start Over").clicked() {
+                result = Some(self.with_empty_mix());
+            }
         }
 
         result

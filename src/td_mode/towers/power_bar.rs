@@ -8,6 +8,7 @@ impl Plugin for PowerBarPlugin {
     fn build(&self, app: &mut App) {
         app.add_system(normal_knight_power_scaling.run_in_state(GameMode::TDMode))
             .add_system(normal_knight_minigame_power_boost.run_in_state(GameMode::TDMode))
+            .add_system(muscle_knight_minigame_power_boost.run_in_state(GameMode::TDMode))
             .add_system_to_stage(
                 CoreStage::PostUpdate,
                 normal_knight_ai_turn.run_in_state(GameMode::TDMode),
@@ -122,6 +123,27 @@ fn normal_knight_minigame_power_boost(
                     gen_successful = true;
                 }
             }
+            commands.entity(entity).insert(new_game);
+        }
+    });
+}
+
+fn muscle_knight_minigame_power_boost(
+    mut tower_query: Query<(Entity, &mut PowerBar, &smoothie_mix::SmoothieMix)>,
+    mut commands: Commands,
+) {
+    use smoothie_mix::*;
+    tower_query.iter_mut().for_each(|(entity, mut bar, game)| {
+        if let Some(game_result) = game.get_game_result() {
+            match GameResult::from(game_result) {
+                GameResult::Victory => {
+                    bar.increase(25);
+                }
+
+                _ => {}
+            }
+
+            let new_game = SmoothieMix::new();
             commands.entity(entity).insert(new_game);
         }
     });
