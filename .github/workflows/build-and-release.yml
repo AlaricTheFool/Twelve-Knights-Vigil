@@ -69,6 +69,7 @@ jobs:
       contents: write
     needs:
       - build-linux 
+      - build-windows
 
     steps:
       - uses: actions/checkout@v3
@@ -76,6 +77,10 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: linux-latest
+      - name: Download Windows Build
+        uses: actions/download-artifact@v3
+        with:
+          name: windows-latest
       - name: Delete Previous Release
         run: gh release delete latest -y
         env:
@@ -83,6 +88,6 @@ jobs:
       - name: Update Tag
         run: git tag latest -f && git push --tags -f
       - name: Create release
-        run: gh release create latest linux-latest.zip
+        run: gh release create latest linux-latest.zip windows-latest.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
