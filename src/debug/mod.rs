@@ -15,8 +15,8 @@ impl Plugin for TKDebugPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(fps::FPSTrackerPlugin)
             .add_startup_system(initialize_debug_models)
-            .add_plugin(bevy_inspector_egui::WorldInspectorPlugin::new())
-            .add_system(add_tilemap_point_markers);
+            .add_plugin(bevy_inspector_egui::WorldInspectorPlugin::new());
+        //            .add_system(add_tilemap_point_markers);
     }
 }
 
@@ -37,6 +37,7 @@ fn initialize_debug_models(
     });
 }
 
+/*
 pub fn add_tilemap_point_markers(
     mut commands: Commands,
     mut query: Query<(Entity, &Track), Added<Track>>,
@@ -69,3 +70,4 @@ pub fn add_tilemap_point_markers(
             });
     }
 }
+*/

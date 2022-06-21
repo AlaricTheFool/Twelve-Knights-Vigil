@@ -14,32 +14,10 @@
 
 #![warn(clippy::missing_docs, clippy::all, clippy::pedantic)]
 
-mod cheats;
-mod coordinate;
-mod gamemode;
-mod input;
-mod knights;
-mod main_menu;
-mod messages;
-mod td_mode;
-mod tilemap;
-mod vn_mode;
-
 #[cfg(feature = "debug")]
 mod debug;
 
 mod prelude {
-    pub use crate::cheats::*;
-    pub use crate::coordinate::*;
-    pub use crate::gamemode::*;
-    pub use crate::input::*;
-    pub use crate::knights::*;
-    pub use crate::main_menu::*;
-    pub use crate::messages::*;
-    pub use crate::td_mode::*;
-    pub use crate::tilemap::*;
-    pub use crate::vn_mode::*;
-    pub use bevy::input::mouse::*;
     pub use bevy::prelude::*;
     pub use bevy_egui::{egui, EguiContext, EguiPlugin};
     pub use bevy_mod_raycast::{RayCastMesh, RayCastSource};
@@ -65,7 +43,6 @@ fn main() {
         //        present_mode: bevy::window::PresentMode::Immediate,
         ..default()
     })
-    .add_loopless_state(GameMode::MainMenu)
     .add_plugins(DefaultPlugins)
     .add_plugin(EguiPlugin);
 
@@ -73,19 +50,6 @@ fn main() {
     {
         app.add_plugin(debug::TKDebugPlugin);
     }
-
-    app.add_plugin(MessagePlugin).add_plugin(InputPlugin);
-
-    app.add_plugin(TDModePlugin)
-        .add_plugin(VNModePlugin)
-        .add_plugin(MainMenuPlugin)
-        .add_plugin(cheats::CheatPlugin);
-
-    /*
-    app.add_plugin(PickablePlugin)
-
-        .add_plugin(TowerPlugin)
-    */
 
     app.run();
 }
