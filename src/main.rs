@@ -23,9 +23,14 @@
 #![warn(clippy::missing_docs, clippy::all, clippy::pedantic)]
 
 mod debug;
+mod gamestate;
+mod main_menu;
 
 mod prelude {
+    pub use crate::gamestate::GameState;
+
     pub use bevy::prelude::*;
+    pub use iyes_loopless::prelude::*;
 }
 
 use crate::prelude::*;
@@ -47,6 +52,10 @@ fn main() {
     {
         app.add_plugin(debug::TKDebugPlugin);
     }
+
+    app.add_loopless_state(GameState::MainMenu);
+
+    app.add_plugin(main_menu::MainMenuPlugin);
 
     app.run();
 }
