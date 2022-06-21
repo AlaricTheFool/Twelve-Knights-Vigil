@@ -1,10 +1,10 @@
 use crate::prelude::*;
-use bevy_egui::{egui, EguiContext, EguiPlugin};
+use bevy_egui::{egui, EguiContext};
 use std::collections::VecDeque;
 
 const FRAME_BUFFER_SIZE: usize = 30;
 
-pub struct FrameTimeBuffer {
+struct FrameTimeBuffer {
     frame_times: VecDeque<f32>,
 }
 
