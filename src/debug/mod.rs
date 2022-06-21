@@ -1,3 +1,9 @@
+//! Inspectors, Metric Displays, and other tools for debugging
+//!
+//! I originally intended to compile the game without these features by
+//! default but I think having them as an option in the settings menu
+//! can't possibly hurt.
+
 use crate::prelude::*;
 use bevy_inspector_egui;
 
