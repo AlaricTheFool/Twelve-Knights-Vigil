@@ -47,10 +47,12 @@ impl Plugin for ProjectilePlugin {
 
 struct ProjectileModels {
     ballista_bolt: Handle<Scene>,
+    hands: Handle<Scene>,
 }
 
 pub enum ProjectileType {
     Ballista,
+    Hand,
 }
 
 #[derive(Component)]
@@ -71,6 +73,7 @@ struct ProjectileCollision;
 fn initialize_projectile_models(assets: Res<AssetServer>, mut commands: Commands) {
     let projectile_models = ProjectileModels {
         ballista_bolt: assets.load("models/towers/weapons/ballista_projectile.glb#Scene0"),
+        hands: assets.load("models/towers/weapons/ballista_projectile.glb#Scene0"),
     };
 
     commands.insert_resource(projectile_models);
