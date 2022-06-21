@@ -25,6 +25,7 @@
 mod debug;
 mod gamestate;
 mod main_menu;
+mod td_mode;
 
 mod prelude {
     pub use crate::gamestate::GameState;
@@ -55,7 +56,8 @@ fn main() {
 
     app.add_loopless_state(GameState::MainMenu);
 
-    app.add_plugin(main_menu::MainMenuPlugin);
+    app.add_plugin(main_menu::MainMenuPlugin)
+        .add_plugin(td_mode::TDModePlugin);
 
     app.run();
 }

@@ -2,4 +2,5 @@
 #[derive(Hash, Debug, Eq, PartialEq, Copy, Clone)]
 pub enum GameState {
     MainMenu,
+    TDMode,
 }

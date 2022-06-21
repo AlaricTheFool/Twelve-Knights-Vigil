@@ -21,7 +21,7 @@ fn setup_main_menu(mut commands: Commands) {
 fn main_menu_ui(
     mut egui_context: ResMut<EguiContext>,
     mut exit: EventWriter<AppExit>,
-    mut _commands: Commands,
+    mut commands: Commands,
 ) {
     egui::CentralPanel::default()
         .frame(egui::Frame::none())
@@ -36,6 +36,10 @@ fn main_menu_ui(
                 );
 
                 ui.add_space(128.0);
+
+                if menu_button(&mut ui, "Play").clicked() {
+                    commands.insert_resource(NextState(GameState::TDMode));
+                }
 
                 if menu_button(&mut ui, "Quit").clicked() {
                     exit.send(AppExit);
