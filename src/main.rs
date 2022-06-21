@@ -22,7 +22,6 @@
 
 #![warn(clippy::missing_docs, clippy::all, clippy::pedantic)]
 
-#[cfg(feature = "debug")]
 mod debug;
 
 mod prelude {

@@ -1,3 +1,5 @@
+//! A small ui element to track the current average fps of the program.
+
 use crate::prelude::*;
 use bevy_egui::{egui, EguiContext};
 use std::collections::VecDeque;

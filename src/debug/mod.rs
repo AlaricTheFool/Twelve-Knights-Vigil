@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use bevy_inspector_egui;
 
 mod fps;
 
@@ -16,8 +17,9 @@ pub struct TKDebugPlugin;
 impl Plugin for TKDebugPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(fps::FPSTrackerPlugin)
-            //   .add_startup_system(initialize_debug_models)
             .add_plugin(bevy_inspector_egui::WorldInspectorPlugin::new());
+
+        //   .add_startup_system(initialize_debug_models)
         //            .add_system(add_tilemap_point_markers);
     }
 }
