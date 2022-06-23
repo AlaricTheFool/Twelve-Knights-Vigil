@@ -21,6 +21,7 @@
 //! may send an enemy flying across the map.
 
 #![warn(clippy::missing_docs, clippy::all, clippy::pedantic)]
+#![forbid(missing_docs)]
 
 mod debug;
 mod gamestate;
