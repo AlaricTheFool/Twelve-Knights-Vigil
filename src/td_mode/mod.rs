@@ -6,27 +6,22 @@
 use crate::prelude::*;
 
 mod camera;
+mod map;
+mod sandbox;
 
 pub struct TDModePlugin;
 
 impl Plugin for TDModePlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(camera::TDCameraPlugin)
-            .add_enter_system(GameState::TDMode, setup)
+            .add_plugin(map::MapPlugin)
+            .add_plugin(sandbox::SandboxPlugin)
             .add_system(
                 go_to_main_menu
                     .run_in_state(GameState::TDMode)
                     .run_if(escape_pressed),
             );
     }
-}
-
-/// Initialize a sample model and camera.
-fn setup(mut meshes: ResMut<Assets<Mesh>>, mut commands: Commands) {
-    commands.spawn_bundle(PbrBundle {
-        mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
-        ..default()
-    });
 }
 
 fn escape_pressed(keys: Res<Input<KeyCode>>) -> bool {
