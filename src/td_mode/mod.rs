@@ -7,6 +7,7 @@ use crate::prelude::*;
 
 mod camera;
 mod map;
+mod raycast;
 mod sandbox;
 
 pub struct TDModePlugin;
@@ -15,6 +16,7 @@ impl Plugin for TDModePlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(camera::TDCameraPlugin)
             .add_plugin(map::MapPlugin)
+            .add_plugin(raycast::PickablePlugin)
             .add_plugin(sandbox::SandboxPlugin)
             .add_enter_system(GameState::TDMode, setup)
             .add_system(

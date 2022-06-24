@@ -7,8 +7,11 @@ pub struct TilePlugin;
 impl Plugin for TilePlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(setup)
-            .add_system(update_tile_positions)
-            .add_system(update_tile_model);
+            // These systems have to be in PreUpdate because the Scene Spawner waits
+            // until the end of PreUpdate to spawn its stuff. Changing these system's stage
+            // introduces bugs due to ordering.
+            .add_system_to_stage(CoreStage::PreUpdate, update_tile_positions)
+            .add_system_to_stage(CoreStage::PreUpdate, update_tile_model);
     }
 }
 
@@ -16,28 +19,60 @@ impl Plugin for TilePlugin {
 #[derive(Component)]
 pub struct Tile;
 
-#[derive(Copy, Clone, Component)]
+#[derive(Copy, Clone, Component, PartialEq, Debug)]
 pub enum TileType {
     Rock,
-    /*
-    Empty,
     Water,
+    Empty,
     Fire,
-    */
+}
+
+impl TileType {
+    pub fn all() -> [TileType; 4] {
+        [
+            TileType::Rock,
+            TileType::Water,
+            TileType::Empty,
+            TileType::Fire,
+        ]
+    }
+
+    pub fn display_name(&self) -> &str {
+        match *self {
+            TileType::Rock => "Rock",
+            TileType::Water => "Water",
+            TileType::Empty => "Air",
+            TileType::Fire => "Fire",
+        }
+    }
 }
 
 /// Container resource for tile models
 struct TileModels {
     rock: Handle<Scene>,
+    water: Handle<Scene>,
+    empty: Handle<Scene>,
+    fire: Handle<Scene>,
 }
 
-#[derive(Component)]
-struct ModelRoot(Entity);
+impl TileModels {
+    fn model_for_type(&self, t_type: TileType) -> Handle<Scene> {
+        match t_type {
+            TileType::Rock => self.rock.clone(),
+            TileType::Water => self.water.clone(),
+            TileType::Empty => self.empty.clone(),
+            TileType::Fire => self.fire.clone(),
+        }
+    }
+}
 
 /// Load tile models from disk into a TileModels struct
 fn setup(assets: Res<AssetServer>, mut commands: Commands) {
     let tile_models = TileModels {
-        rock: assets.load("models/tile.glb#Scene0"),
+        rock: assets.load("models/tile_rock.glb#Scene0"),
+        water: assets.load("models/tile_water.glb#Scene0"),
+        empty: assets.load("models/tile_empty.glb#Scene0"),
+        fire: assets.load("models/tile_fire.glb#Scene0"),
     };
 
     commands.insert_resource(tile_models);
@@ -77,10 +112,11 @@ fn update_tile_model(
             .insert(Parent(e))
             .insert_bundle(TransformBundle::identity())
             .with_children(|p| {
-                // SPAWN MODEL HERE
-                p.spawn_scene(models.rock.clone());
+                p.spawn_scene(models.model_for_type(*tile_type));
             })
             .id();
+
         commands.entity(e).insert(ModelRoot(new_root_e));
+        info!("Spawned the models for tile entity: {e:?}");
     });
 }

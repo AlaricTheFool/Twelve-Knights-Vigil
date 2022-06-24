@@ -20,10 +20,10 @@ pub fn seconds_rate_to_fixed_rate(val: f32, timestep: u64) -> f32 {
 }
 
 /// Grid Coordinates
-#[derive(Component, Copy, Clone)]
+#[derive(Component, Copy, Clone, PartialEq, Debug)]
 pub struct Coordinate {
-    x: usize,
-    y: usize,
+    pub x: usize,
+    pub y: usize,
 }
 
 impl From<(usize, usize)> for Coordinate {
@@ -44,3 +44,7 @@ impl Mul<Vec3> for Coordinate {
         Vec3::new(rhs.x * self.x as f32, rhs.y, rhs.z * self.y as f32)
     }
 }
+
+/// A pointer to the base of a scene containing models loaded from a gltf format.
+#[derive(Component)]
+pub struct ModelRoot(pub Entity);

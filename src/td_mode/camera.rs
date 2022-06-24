@@ -1,6 +1,6 @@
 //! Functionality for the camera and its movement in TD Maps
 
-use crate::prelude::*;
+use super::*;
 
 /// Units to zoom the camera in or out for each click of the mouse wheel
 const ZOOM_RATE: f32 = 1.0;
@@ -78,7 +78,8 @@ fn setup(mut commands: Commands) {
                 transform: Transform::from_xyz(0.0, 3.0, 3.0).looking_at(Vec3::ZERO, Vec3::Y),
                 ..default()
             })
-            .insert(PlayerCam);
+            .insert(PlayerCam)
+            .insert(bevy_mod_raycast::RayCastSource::<raycast::PickableRaycastSet>::new());
         });
 }
 

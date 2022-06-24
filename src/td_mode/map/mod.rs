@@ -13,6 +13,11 @@ impl Plugin for MapPlugin {
         app.insert_resource(Map::empty())
             .add_plugin(TilePlugin)
             .add_system(
+                update_changed_tiles
+                    .run_in_state(GameState::TDMode)
+                    .run_if(are_tiles_dirty),
+            )
+            .add_system(
                 reload_all_map_tiles
                     .run_in_state(GameState::TDMode)
                     .run_if(is_map_resized),
@@ -30,6 +35,9 @@ pub struct Map {
     size_dirty: bool,
 
     tiles: Vec<TileType>,
+
+    /// Flag the index of tiles that have been edited so that the map's entities can be  updated.
+    dirty_tiles: Vec<usize>,
 }
 
 impl Map {
@@ -42,6 +50,7 @@ impl Map {
             dimensions,
             size_dirty: true,
             tiles: vec![TileType::Rock; dimensions.0 * dimensions.1],
+            dirty_tiles: Vec::new(),
         }
     }
 
@@ -62,8 +71,18 @@ impl Map {
         (x, y).into()
     }
 
+    fn coord_to_idx(&self, coord: Coordinate) -> usize {
+        coord.y * self.dimensions.1 + coord.x
+    }
+
     fn tile_type_at_index(&self, idx: usize) -> Option<&TileType> {
         self.tiles.get(idx)
+    }
+
+    pub fn set_tile(&mut self, coord: Coordinate, tile_type: TileType) {
+        let idx = self.coord_to_idx(coord);
+        self.tiles[idx] = tile_type;
+        self.dirty_tiles.push(idx);
     }
 }
 
@@ -71,12 +90,14 @@ fn is_map_resized(map: Res<Map>) -> bool {
     map.size_dirty
 }
 
+fn are_tiles_dirty(map: Res<Map>) -> bool {
+    !map.dirty_tiles.is_empty()
+}
+
 fn reload_all_map_tiles(
     mut map_root_query: Query<(Entity, &mut MapRoot)>,
     mut map: ResMut<Map>,
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     if map_root_query.is_empty() {
         commands
@@ -136,6 +157,24 @@ fn reload_all_map_tiles(
 
         map.size_dirty = false;
     }
+}
+
+fn update_changed_tiles(
+    tiles: Query<(Entity, &Coordinate), With<Tile>>,
+    mut map: ResMut<Map>,
+    mut commands: Commands,
+) {
+    tiles
+        .iter()
+        .filter(|(_, coord)| map.dirty_tiles.contains(&map.coord_to_idx(**coord)))
+        .for_each(|(e, coord)| {
+            let idx = map.coord_to_idx(*coord);
+            let tile_type = map.tiles[idx];
+
+            commands.entity(e).insert(tile_type);
+        });
+
+    map.dirty_tiles = Vec::new();
 }
 
 /// Tag Component for the parent transform for all of the map tiles
