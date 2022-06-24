@@ -125,12 +125,14 @@ fn reload_all_map_tiles(
                     .insert(Tile)
                     .insert(*tile_type)
                     .insert(map.idx_to_coord(idx))
-                    .insert_bundle(PbrBundle {
-                        mesh: meshes.add(Mesh::from(shape::Cube { size: 0.9 })),
-                        material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
-                        ..default()
-                    });
+                    .insert_bundle(TransformBundle::identity());
             });
+
+        commands.entity(root_e).insert(Transform::from_xyz(
+            map.dimensions.0 as f32 * -0.5,
+            0.0,
+            map.dimensions.1 as f32 * -0.5,
+        ));
 
         map.size_dirty = false;
     }

@@ -16,12 +16,40 @@ impl Plugin for TDModePlugin {
         app.add_plugin(camera::TDCameraPlugin)
             .add_plugin(map::MapPlugin)
             .add_plugin(sandbox::SandboxPlugin)
+            .add_enter_system(GameState::TDMode, setup)
             .add_system(
                 go_to_main_menu
                     .run_in_state(GameState::TDMode)
                     .run_if(escape_pressed),
             );
     }
+}
+
+/// Spawn a directional light.
+fn setup(mut commands: Commands) {
+    const HALF_SIZE: f32 = 10.0;
+    commands.spawn_bundle(DirectionalLightBundle {
+        directional_light: DirectionalLight {
+            shadow_projection: OrthographicProjection {
+                left: -HALF_SIZE,
+                right: HALF_SIZE,
+                bottom: -HALF_SIZE,
+                top: HALF_SIZE,
+                near: -10.0 * HALF_SIZE,
+                far: 10.0 * HALF_SIZE,
+                ..default()
+            },
+            shadows_enabled: true,
+            ..default()
+        },
+        transform: Transform::identity().with_rotation(Quat::from_euler(
+            EulerRot::ZYX,
+            -std::f32::consts::FRAC_PI_4,
+            0.0,
+            -std::f32::consts::FRAC_PI_4,
+        )),
+        ..default()
+    });
 }
 
 fn escape_pressed(keys: Res<Input<KeyCode>>) -> bool {

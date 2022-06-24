@@ -11,7 +11,7 @@ const FIXED_STAGE_TIMESTEP: u64 = 10;
 const PAN_RATE: f32 = 2.0;
 
 /// Revolutions per second to rotate the camera
-const ROTATION_RATE: f32 = 0.5;
+const ROTATION_RATE: f32 = 0.25;
 
 /// Tag component for the camera's pivot point
 #[derive(Component)]
