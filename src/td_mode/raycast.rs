@@ -13,7 +13,7 @@ impl Plugin for PickablePlugin {
             .insert_resource(DefaultPluginState::<PickableRaycastSet>::default())
             .insert_resource(CursorState::NoTarget)
             .add_system_to_stage(
-                CoreStage::PreUpdate,
+                CoreStage::First,
                 add_raycast_components_to_tile_meshes.run_in_state(GameState::TDMode),
             )
             .add_system(update_cursor_state.run_in_state(GameState::TDMode))
