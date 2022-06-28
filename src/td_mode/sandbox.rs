@@ -1,8 +1,13 @@
 //! Code for the map editor/sandbox tools
 
-use super::*;
+use super::{elements::ApplyElementMessage, elements::ElementalAffliction, *};
 use bevy_egui::{egui, EguiContext};
 use map::TileType;
+
+const FIXED_STEP_MS: u64 = 20;
+const APPLICATOR_ELEMENTS_PER_SECOND: u32 = 10;
+const APPLICATOR_ELEMENTS_PER_FRAME: f32 =
+    (APPLICATOR_ELEMENTS_PER_SECOND as f32) / (1000 / FIXED_STEP_MS) as f32;
 
 pub struct SandboxPlugin;
 
@@ -10,22 +15,40 @@ impl Plugin for SandboxPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(SandboxControlState::new())
             .add_system(sandbox_ui.run_in_state(GameState::TDMode))
-            .add_system(paint_tile.run_in_state(GameState::TDMode));
+            .add_system(tile_inspector_ui.run_in_state(GameState::TDMode));
+
+        let mut fixed_stage = SystemStage::parallel();
+        fixed_stage.add_system(use_tool.run_in_state(GameState::TDMode));
+
+        app.add_stage_before(
+            CoreStage::Update,
+            "tool_fixed_stage",
+            FixedTimestepStage::new(Duration::from_millis(FIXED_STEP_MS)).with_stage(fixed_stage),
+        );
     }
 }
 
 struct SandboxControlState {
     new_dimensions: (usize, usize),
-    tile_brush: TileType,
+    current_tool: Tool,
+    selected_tile: Option<Entity>,
 }
 
 impl SandboxControlState {
     fn new() -> Self {
         Self {
             new_dimensions: (8, 8),
-            tile_brush: TileType::Water,
+            current_tool: Tool::Select,
+            selected_tile: None,
         }
     }
+}
+
+#[derive(Debug)]
+enum Tool {
+    Select,
+    TileBrush(TileType),
+    ElementApplicator(Element, f32),
 }
 
 fn sandbox_ui(
@@ -49,34 +72,101 @@ fn sandbox_ui(
             map.resize(control_state.new_dimensions);
         }
 
-        ui.heading("Tile Brush");
+        ui.heading("Tools");
 
-        let current_brush = control_state.tile_brush;
-        ui.menu_button(current_brush.display_name(), |ui| {
-            TileType::all()
-                .iter()
-                .filter(|t| **t != current_brush)
-                .for_each(|t| {
-                    if ui.button(t.display_name()).clicked() {
-                        control_state.tile_brush = *t;
-                    }
-                })
+        if ui.button("Select").clicked() {
+            control_state.current_tool = Tool::Select;
+        }
+
+        let t_brush_text = if let Tool::TileBrush(tile) = control_state.current_tool {
+            format!("{tile}")
+        } else {
+            format!("Tile Brush")
+        };
+        ui.menu_button(t_brush_text, |ui| {
+            TileType::all().iter().for_each(|t| {
+                if ui.button(format!("{t}")).clicked() {
+                    control_state.current_tool = Tool::TileBrush(*t);
+                }
+            })
+        });
+
+        let e_brush_text = if let Tool::ElementApplicator(element, _) = control_state.current_tool {
+            format!("{element}")
+        } else {
+            format!("Element Applicator")
+        };
+        ui.menu_button(e_brush_text, |ui| {
+            Element::all().iter().for_each(|e| {
+                if ui.button(format!("{e}")).clicked() {
+                    control_state.current_tool = Tool::ElementApplicator(*e, 0.0);
+                }
+            })
         });
     });
 }
 
+fn tile_inspector_ui(
+    tile_query: Query<(&TileType, &Coordinate, Option<&ElementalAffliction>)>,
+    control_state: Res<SandboxControlState>,
+    mut egui_context: ResMut<EguiContext>,
+) {
+    if let Some(tile_entity) = control_state.selected_tile {
+        if let Ok((tile_type, coord, elements)) = tile_query.get(tile_entity) {
+            egui::Window::new("Tile Inspector").show(egui_context.ctx_mut(), |ui| {
+                ui.label(format!("Coordinates: {coord}"));
+                ui.label(format!("Tile Type: {tile_type}"));
+
+                if let Some(applied_elements) = elements {
+                    ui.label("Applied Elements:");
+                    ui.label(format!("{applied_elements}"));
+                }
+            });
+        }
+    }
+}
+
 use raycast::CursorState;
-fn paint_tile(
+fn use_tool(
     button: Res<Input<MouseButton>>,
     cursor: Res<CursorState>,
-    control_state: ResMut<SandboxControlState>,
+    mut control_state: ResMut<SandboxControlState>,
     mut map: ResMut<map::Map>,
+    mut commands: Commands,
 ) {
     if button.pressed(MouseButton::Left) {
         match *cursor {
-            CursorState::OnTile(coord) => {
-                map.set_tile(coord, control_state.tile_brush);
-            }
+            CursorState::OnTile(tile_entity, coord) => match control_state.current_tool {
+                Tool::Select => {
+                    if button.just_pressed(MouseButton::Left) {
+                        control_state.selected_tile = Some(tile_entity);
+                    }
+                }
+
+                Tool::TileBrush(tile_type) => {
+                    map.set_tile(coord, tile_type);
+                }
+
+                Tool::ElementApplicator(element, mut accumulation) => {
+                    accumulation += APPLICATOR_ELEMENTS_PER_FRAME;
+                    let mut stacks_to_apply_this_frame = 0;
+
+                    while accumulation > 1.0 {
+                        stacks_to_apply_this_frame += 1;
+                        accumulation -= 1.0;
+                    }
+
+                    if stacks_to_apply_this_frame > 0 {
+                        commands.spawn_bundle(ApplyElementMessage::single_element(
+                            element,
+                            stacks_to_apply_this_frame,
+                            tile_entity,
+                        ));
+                    }
+
+                    control_state.current_tool = Tool::ElementApplicator(element, accumulation);
+                } //_ => warn!("Did not implement tool: {:?}", control_state.current_tool),
+            },
             _ => {}
         }
     }

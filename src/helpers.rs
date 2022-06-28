@@ -45,6 +45,12 @@ impl Mul<Vec3> for Coordinate {
     }
 }
 
+impl std::fmt::Display for Coordinate {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({}, {})", self.x, self.y)
+    }
+}
+
 /// A pointer to the base of a scene containing models loaded from a gltf format.
 #[derive(Component)]
 pub struct ModelRoot(pub Entity);

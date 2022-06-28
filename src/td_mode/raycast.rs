@@ -24,7 +24,7 @@ impl Plugin for PickablePlugin {
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum CursorState {
     NoTarget,
-    OnTile(Coordinate),
+    OnTile(Entity, Coordinate),
 }
 
 #[derive(Component)]
@@ -115,7 +115,7 @@ fn update_cursor_state(
         if let Ok(root_entity) = root_query.get(entity) {
             if let Ok(coord) = tile_query.get(root_entity.0) {
                 trace!("Tile Hovered: {:?}", coord);
-                *cursor_state = CursorState::OnTile(*coord);
+                *cursor_state = CursorState::OnTile(root_entity.0, *coord);
             }
         }
     }

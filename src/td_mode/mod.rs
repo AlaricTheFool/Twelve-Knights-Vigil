@@ -6,9 +6,14 @@
 use crate::prelude::*;
 
 mod camera;
+mod elements;
 mod map;
+mod messages;
 mod raycast;
 mod sandbox;
+
+use elements::Element;
+use messages::*;
 
 pub struct TDModePlugin;
 
@@ -18,7 +23,12 @@ impl Plugin for TDModePlugin {
             .add_plugin(map::MapPlugin)
             .add_plugin(raycast::PickablePlugin)
             .add_plugin(sandbox::SandboxPlugin)
+            .add_plugin(elements::ElementPlugin)
             .add_enter_system(GameState::TDMode, setup)
+            .add_system_to_stage(
+                CoreStage::First,
+                messages::clear_handled_messages.run_in_state(GameState::TDMode),
+            )
             .add_system(
                 go_to_main_menu
                     .run_in_state(GameState::TDMode)

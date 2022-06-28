@@ -37,13 +37,19 @@ impl TileType {
         ]
     }
 
-    pub fn display_name(&self) -> &str {
+    fn display_name(&self) -> &str {
         match *self {
             TileType::Rock => "Rock",
             TileType::Water => "Water",
             TileType::Empty => "Air",
             TileType::Fire => "Fire",
         }
+    }
+}
+
+impl std::fmt::Display for TileType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.display_name())
     }
 }
 
