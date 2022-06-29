@@ -1,3 +1,5 @@
+mod chemistry;
+
 use super::*;
 use std::collections::HashMap;
 use std::ops::Add;
@@ -63,6 +65,13 @@ impl ElementalAffliction {
             0
         }
     }
+
+    pub fn contains(&self, other: &ElementalAffliction) -> bool {
+        other
+            .0
+            .iter()
+            .all(|(&element, &amount)| self.get_element_amount(element) >= amount)
+    }
 }
 
 impl Add<&ElementalAffliction> for &ElementalAffliction {
@@ -126,7 +135,8 @@ pub struct ElementPlugin;
 
 impl Plugin for ElementPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(handle_apply_element_messages.run_in_state(GameState::TDMode));
+        app.add_plugin(chemistry::ChemistryPlugin)
+            .add_system(handle_apply_element_messages.run_in_state(GameState::TDMode));
     }
 }
 
@@ -189,5 +199,30 @@ mod tests {
         let expected = 3 + 6;
         let actual = affliction.get_element_amount(Element::Air);
         assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_afflictions_contain_other_afflictions() {
+        let mut parent = ElementalAffliction::empty();
+        let mut child = ElementalAffliction::empty();
+
+        // Empty contains empty
+        assert!(parent.contains(&child));
+
+        // Child contains one and parent is empty
+        child.add_element(Element::Earth, 4);
+        assert_eq!(false, parent.contains(&child));
+
+        // Parent and Child Single Element
+        parent.add_element(Element::Earth, 4);
+        assert!(parent.contains(&child));
+
+        // Parent has more than child
+        parent.add_element(Element::Earth, 4);
+        assert!(parent.contains(&child));
+
+        // Parent has other elements
+        parent.add_element(Element::Water, 5);
+        assert!(parent.contains(&child));
     }
 }
