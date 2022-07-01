@@ -2,6 +2,7 @@
 
 mod tile;
 
+pub use super::td_mode_prelude::*;
 use crate::prelude::*;
 
 pub use tile::*;
@@ -71,8 +72,8 @@ impl Map {
         (x, y).into()
     }
 
-    fn coord_to_idx(&self, coord: Coordinate) -> usize {
-        coord.y * self.dimensions.1 + coord.x
+    pub fn coord_to_idx(&self, coord: Coordinate) -> usize {
+        coord.y * self.dimensions.0 + coord.x
     }
 
     fn tile_type_at_index(&self, idx: usize) -> Option<&TileType> {
@@ -83,6 +84,36 @@ impl Map {
         let idx = self.coord_to_idx(coord);
         self.tiles[idx] = tile_type;
         self.dirty_tiles.push(idx);
+    }
+
+    pub fn coord_adjacent_indices(&self, coord: Coordinate) -> Vec<usize> {
+        let start_x = coord.x.saturating_sub(1);
+        let end_x = (coord.x + 2).min(self.dimensions.0);
+
+        let start_y = coord.y.saturating_sub(1);
+        let end_y = (coord.y + 2).min(self.dimensions.1);
+
+        (start_y..end_y)
+            .flat_map(|y| {
+                (start_x..end_x).filter_map(move |x| {
+                    let this_coord = Coordinate::from((x, y));
+                    if self.coord_in_bounds(this_coord) && this_coord != coord {
+                        Some(self.coord_to_idx(this_coord))
+                    } else {
+                        None
+                    }
+                })
+            })
+            .collect()
+    }
+
+    fn coord_in_bounds(&self, coord: Coordinate) -> bool {
+        coord.x < self.dimensions.0 && coord.y < self.dimensions.1
+    }
+
+    pub fn tile_type_at_coord(&self, coord: Coordinate) -> Option<&TileType> {
+        let idx = self.coord_to_idx(coord);
+        self.tile_type_at_index(idx)
     }
 }
 
@@ -180,8 +211,8 @@ fn update_changed_tiles(
 /// Tag Component for the parent transform for all of the map tiles
 /// Contains a Vec of all the child tiles for better iteration
 #[derive(Component)]
-struct MapRoot {
-    tile_entities: Vec<Entity>,
+pub struct MapRoot {
+    pub tile_entities: Vec<Entity>,
 }
 
 impl MapRoot {
@@ -189,5 +220,20 @@ impl MapRoot {
         Self {
             tile_entities: Vec::new(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_coord_to_idx_on_small_map() {
+        let map = Map::new((1, 2));
+
+        let actual = map.coord_to_idx(Coordinate::from((0, 1)));
+        let expected = 1;
+
+        assert_eq!(actual, expected);
     }
 }

@@ -2,7 +2,7 @@ mod chemistry;
 
 use super::*;
 use std::collections::HashMap;
-use std::ops::Add;
+use std::ops::{Add, Sub, SubAssign};
 
 #[derive(PartialEq, Debug, Eq, Hash, Clone, Copy)]
 pub enum Element {
@@ -51,6 +51,16 @@ impl ElementalAffliction {
         self.0.insert(element, initial + amount);
     }
 
+    pub fn subtract_element(&mut self, element: Element, amount: u32) {
+        let initial = if let Some(&existing_val) = self.0.get(&element) {
+            existing_val
+        } else {
+            0
+        };
+
+        self.0.insert(element, initial.saturating_sub(amount));
+    }
+
     pub fn single(element: Element, amount: u32) -> Self {
         let mut result = Self::empty();
         result.add_element(element, amount);
@@ -66,11 +76,20 @@ impl ElementalAffliction {
         }
     }
 
+    /// Checks if all the elements in other are present in self
     pub fn contains(&self, other: &ElementalAffliction) -> bool {
         other
             .0
             .iter()
             .all(|(&element, &amount)| self.get_element_amount(element) >= amount)
+    }
+
+    /// Checks if all the elements in other have the exact same values as self.
+    pub fn contains_exactly(&self, other: &ElementalAffliction) -> bool {
+        other
+            .0
+            .iter()
+            .all(|(&element, &amount)| self.get_element_amount(element) == amount)
     }
 }
 
@@ -85,6 +104,28 @@ impl Add<&ElementalAffliction> for &ElementalAffliction {
         });
 
         result
+    }
+}
+
+impl Sub<&ElementalAffliction> for &ElementalAffliction {
+    type Output = ElementalAffliction;
+
+    fn sub(self, other: &ElementalAffliction) -> Self::Output {
+        let mut result = self.clone();
+
+        other.0.iter().for_each(|(&element, &amount)| {
+            result.subtract_element(element, amount);
+        });
+
+        result
+    }
+}
+
+impl SubAssign<&ElementalAffliction> for ElementalAffliction {
+    fn sub_assign(&mut self, other: &ElementalAffliction) {
+        other.0.iter().for_each(|(&element, &amount)| {
+            self.subtract_element(element, amount);
+        });
     }
 }
 
@@ -109,7 +150,11 @@ impl std::fmt::Display for ElementalAffliction {
 
 /// Tag component for applying elements
 #[derive(Component)]
-struct ApplyElement;
+pub struct ApplyElement;
+
+/// Tag component for reducing elements
+#[derive(Component)]
+pub struct RemoveElements;
 
 #[derive(Bundle)]
 pub struct ApplyElementMessage {
@@ -133,10 +178,30 @@ impl ApplyElementMessage {
 /// This plugin handles all elemental interactions
 pub struct ElementPlugin;
 
+const APPLY_ELEMENT_STAGE: &str = "apply_elements";
+const REMOVE_ELEMENT_STAGE: &str = "remove_elements";
+
 impl Plugin for ElementPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(chemistry::ChemistryPlugin)
-            .add_system(handle_apply_element_messages.run_in_state(GameState::TDMode));
+            .add_stage_before(
+                CoreStage::Update,
+                APPLY_ELEMENT_STAGE,
+                SystemStage::parallel(),
+            )
+            .add_stage_before(
+                APPLY_ELEMENT_STAGE,
+                REMOVE_ELEMENT_STAGE,
+                SystemStage::parallel(),
+            )
+            .add_system_to_stage(
+                REMOVE_ELEMENT_STAGE,
+                handle_remove_element_messages.run_in_state(GameState::TDMode),
+            )
+            .add_system_to_stage(
+                APPLY_ELEMENT_STAGE,
+                handle_apply_element_messages.run_in_state(GameState::TDMode),
+            );
     }
 }
 
@@ -153,13 +218,37 @@ fn handle_apply_element_messages(
         .for_each(|(message_entity, target, affliction)| {
             //DO THE STUFF
             if let Ok(existing_affliction) = affliction_query.get(target.0) {
+                trace!("Adding to existing affliction");
                 commands
                     .entity(target.0)
                     .insert(existing_affliction + affliction);
             } else {
+                trace!("Creating new affliction.");
                 commands.entity(target.0).insert(affliction.clone());
             }
 
+            // Message is handled
+            commands.entity(message_entity).insert(Handled);
+        });
+}
+
+fn handle_remove_element_messages(
+    message_query: Query<
+        (Entity, &Target, &ElementalAffliction),
+        (With<Message>, With<RemoveElements>),
+    >,
+    affliction_query: Query<&ElementalAffliction>,
+    mut commands: Commands,
+) {
+    message_query
+        .iter()
+        .for_each(|(message_entity, target, affliction)| {
+            //DO THE STUFF
+            if let Ok(existing_affliction) = affliction_query.get(target.0) {
+                commands
+                    .entity(target.0)
+                    .insert(existing_affliction - affliction);
+            }
             // Message is handled
             commands.entity(message_entity).insert(Handled);
         });
@@ -182,6 +271,20 @@ mod tests {
         result.add_element(Element::Earth, 6);
 
         assert_eq!(&first + &second, result);
+    }
+
+    #[test]
+    fn subtract_elemental_affliction() {
+        let mut first = ElementalAffliction::empty();
+        let mut second = ElementalAffliction::empty();
+        let mut result = ElementalAffliction::empty();
+
+        first.add_element(Element::Air, 9);
+        second.add_element(Element::Air, 6);
+
+        result.add_element(Element::Air, 3);
+
+        assert_eq!(&first - &second, result);
     }
 
     #[test]

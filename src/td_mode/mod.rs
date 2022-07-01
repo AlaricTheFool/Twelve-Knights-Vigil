@@ -12,8 +12,13 @@ mod messages;
 mod raycast;
 mod sandbox;
 
-use elements::Element;
-use messages::*;
+mod td_mode_prelude {
+    pub use super::elements::*;
+    pub use super::map::*;
+    pub use super::messages::*;
+}
+
+use td_mode_prelude::*;
 
 pub struct TDModePlugin;
 

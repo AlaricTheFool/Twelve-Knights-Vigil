@@ -52,14 +52,14 @@ fn add_raycast_components_to_tile_meshes(
     mut commands: Commands,
 ) {
     added_mesh_query.iter().for_each(|e| {
-        info!("Mesh added to entity: {e:?}");
+        trace!("Mesh added to entity: {e:?}");
     });
     tile_query.iter().for_each(|entity| {
-        info!("Adding raycasting to meshes for entity {entity:?}");
+        trace!("Adding raycasting to meshes for entity {entity:?}");
         let children_with_meshes =
             find_children_with_meshes_recursive(entity, &children_query, &mesh_query);
 
-        info!(
+        trace!(
             "Adding raycasting to {} meshes.",
             children_with_meshes.len()
         );

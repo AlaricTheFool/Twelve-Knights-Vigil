@@ -1,8 +1,9 @@
 //! Code for the map editor/sandbox tools
 
+use super::td_mode_prelude::*;
 use super::{elements::ApplyElementMessage, elements::ElementalAffliction, *};
 use bevy_egui::{egui, EguiContext};
-use map::TileType;
+use map::{MapRoot, TileType};
 
 const FIXED_STEP_MS: u64 = 20;
 const APPLICATOR_ELEMENTS_PER_SECOND: u32 = 10;
@@ -130,6 +131,7 @@ use raycast::CursorState;
 fn use_tool(
     button: Res<Input<MouseButton>>,
     cursor: Res<CursorState>,
+    map_root_query: Query<&MapRoot>,
     mut control_state: ResMut<SandboxControlState>,
     mut map: ResMut<map::Map>,
     mut commands: Commands,
@@ -144,6 +146,25 @@ fn use_tool(
                 }
 
                 Tool::TileBrush(tile_type) => {
+                    let prev_tile_type = map.tile_type_at_coord(coord).unwrap();
+
+                    if *prev_tile_type != tile_type {
+                        let map_root = map_root_query.get_single().unwrap();
+                        let tile_idx = map.coord_to_idx(coord);
+                        let tile_entity = map_root.tile_entities[tile_idx];
+                        match tile_type {
+                            TileType::Fire => {
+                                commands
+                                    .spawn()
+                                    .insert(Message)
+                                    .insert(Target(tile_entity))
+                                    .insert(ApplyElement)
+                                    .insert(ElementalAffliction::single(Element::Fire, 100));
+                            }
+                            _ => {}
+                        }
+                    }
+
                     map.set_tile(coord, tile_type);
                 }
 
