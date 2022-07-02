@@ -155,12 +155,14 @@ fn spread_fire(
             .for_each(|(entity, _, coord, elemental_affliction)| {
                 let mut indices = map.coord_adjacent_indices(*coord);
                 let remaining_fire = elemental_affliction.get_element_amount(Element::Fire);
-                info!("Remaining Fire: {remaining_fire}");
+                trace!("Remaining Fire: {remaining_fire}");
                 indices.truncate(remaining_fire as usize);
 
+                let mut actual_added = 0;
                 indices.iter().for_each(|&idx| {
                     trace!("Adding one heat to tile at idx {idx}");
                     // ADD FIRE TO INDEX TILE
+                    actual_added += 1;
                     let target_tile = tiles.tile_entities[idx];
                     commands
                         .spawn()
@@ -172,7 +174,7 @@ fn spread_fire(
 
                 // REMOVE FIRE FROM SOURCE TILE
                 let amount_to_remove = indices.len();
-                info!("Removing {amount_to_remove} heat from source tile.");
+                trace!("Removing {amount_to_remove} heat from source tile.");
                 commands
                     .spawn()
                     .insert(Message)

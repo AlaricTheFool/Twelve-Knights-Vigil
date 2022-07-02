@@ -223,9 +223,11 @@ fn handle_apply_element_messages(
     affliction_query: Query<&ElementalAffliction>,
     mut commands: Commands,
 ) {
+    let mut total_elements_applied = ElementalAffliction::empty();
     message_query
         .iter()
         .for_each(|(message_entity, target, affliction)| {
+            total_elements_applied = &total_elements_applied + affliction;
             //DO THE STUFF
             if let Ok(existing_affliction) = affliction_query.get(target.0) {
                 trace!("Adding to existing affliction");
@@ -240,6 +242,8 @@ fn handle_apply_element_messages(
             // Message is handled
             commands.entity(message_entity).insert(Handled);
         });
+
+    info!("Total Applied: {total_elements_applied}");
 }
 
 fn handle_remove_element_messages(
@@ -250,9 +254,12 @@ fn handle_remove_element_messages(
     affliction_query: Query<&ElementalAffliction>,
     mut commands: Commands,
 ) {
+    let mut total_elements_removed = ElementalAffliction::empty();
     message_query
         .iter()
         .for_each(|(message_entity, target, affliction)| {
+            total_elements_removed = &total_elements_removed + &affliction;
+
             //DO THE STUFF
             if let Ok(existing_affliction) = affliction_query.get(target.0) {
                 commands
@@ -262,6 +269,11 @@ fn handle_remove_element_messages(
             // Message is handled
             commands.entity(message_entity).insert(Handled);
         });
+
+    if total_elements_removed != ElementalAffliction::empty() {
+
+    info!("Total Removed: {total_elements_removed}");
+    }
 }
 
 fn consolidate_element_messages(
@@ -283,22 +295,19 @@ fn consolidate_element_messages(
     let mut apply_sums = HashMap::new();
     let mut remove_sums = HashMap::new();
 
-    let mut all_added = ElementalAffliction::empty();
-    let mut all_subtracted = ElementalAffliction::empty();
     // Sum up existing messages and despawn them
+
     message_query
         .iter()
         .for_each(|(entity, target, elements, apply, remove)| {
             if apply.is_some() {
-                all_added = elements + &all_added;
                 if let Some(existing_elements) = apply_sums.remove(&target.0) {
                     apply_sums.insert(target.0, &existing_elements + elements);
                 } else {
                     apply_sums.insert(target.0, elements.clone());
                 }
             } else if remove.is_some() {
-                all_subtracted = &all_subtracted + elements;
-                if let Some(existing_elements) = remove_sums.remove(&target.0) {
+                if let Some(existing_elements) = apply_sums.remove(&target.0) {
                     remove_sums.insert(target.0, &existing_elements + elements);
                 } else {
                     remove_sums.insert(target.0, elements.clone());
@@ -311,7 +320,7 @@ fn consolidate_element_messages(
     // Spawn new message for each target with totals
 
     apply_sums.iter().for_each(|(target, elements)| {
-        trace!("Adding {elements} to {target:?}");
+        info!("Adding {elements} to {target:?}");
         commands
             .spawn()
             .insert(Message)
@@ -321,7 +330,7 @@ fn consolidate_element_messages(
     });
 
     remove_sums.iter().for_each(|(target, elements)| {
-        trace!("Removing {elements} from {target:?}");
+        info!("Removing {elements} from {target:?}");
         commands
             .spawn()
             .insert(Message)
