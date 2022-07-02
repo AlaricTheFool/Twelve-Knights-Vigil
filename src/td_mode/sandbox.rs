@@ -16,6 +16,7 @@ impl Plugin for SandboxPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(SandboxControlState::new())
             .add_system(sandbox_ui.run_in_state(GameState::TDMode))
+            .add_system(place_debug_cubes_along_path.run_in_state(GameState::TDMode))
             .add_system(tile_inspector_ui.run_in_state(GameState::TDMode));
 
         let mut fixed_stage = SystemStage::parallel();
@@ -33,6 +34,9 @@ struct SandboxControlState {
     new_dimensions: (usize, usize),
     current_tool: Tool,
     selected_tile: Option<Entity>,
+    start_coord: Option<Coordinate>,
+    end_coord: Option<Coordinate>,
+    redraw_path: bool,
 }
 
 impl SandboxControlState {
@@ -41,6 +45,9 @@ impl SandboxControlState {
             new_dimensions: (8, 8),
             current_tool: Tool::Select,
             selected_tile: None,
+            start_coord: None,
+            end_coord: None,
+            redraw_path: true,
         }
     }
 }
@@ -50,6 +57,15 @@ enum Tool {
     Select,
     TileBrush(TileType),
     ElementApplicator(Element, f32),
+    PlacePiece(TilePiece),
+}
+
+/// A temporary enum? Eventually this will include towers, and any other things that go on top of
+/// terrain.
+#[derive(Debug, Copy, Clone)]
+enum TilePiece {
+    PathStart,
+    PathEnd,
 }
 
 fn sandbox_ui(
@@ -103,6 +119,15 @@ fn sandbox_ui(
                     control_state.current_tool = Tool::ElementApplicator(*e, 0.0);
                 }
             })
+        });
+
+        ui.horizontal(|ui| {
+            if ui.button("Start").clicked() {
+                control_state.current_tool = Tool::PlacePiece(TilePiece::PathStart);
+            }
+            if ui.button("End").clicked() {
+                control_state.current_tool = Tool::PlacePiece(TilePiece::PathEnd);
+            }
         });
     });
 }
@@ -186,9 +211,76 @@ fn use_tool(
                     }
 
                     control_state.current_tool = Tool::ElementApplicator(element, accumulation);
+                }
+
+                Tool::PlacePiece(tile_piece) => {
+                    if button.just_pressed(MouseButton::Left) {
+                        control_state.redraw_path = true;
+                        match tile_piece {
+                            TilePiece::PathStart => {
+                                control_state.start_coord = Some(coord);
+                            }
+
+                            TilePiece::PathEnd => {
+                                control_state.end_coord = Some(coord);
+                            }
+                        }
+                    }
                 } //_ => warn!("Did not implement tool: {:?}", control_state.current_tool),
             },
             _ => {}
         }
+    }
+}
+
+/// A tag struct for the astar path markers temporarily being displayed.
+#[derive(Component)]
+struct DebugPoint;
+
+fn place_debug_cubes_along_path(
+    debug_obj_query: Query<Entity, With<DebugPoint>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    map: Res<Map>,
+    mut control_state: ResMut<SandboxControlState>,
+    mut commands: Commands,
+) {
+    if (control_state.redraw_path || map.is_changed())
+        && control_state.start_coord.is_some()
+        && control_state.end_coord.is_some()
+    {
+        let start_coord = control_state.start_coord.unwrap();
+        let end_coord = control_state.end_coord.unwrap();
+        let result = astar(
+            &start_coord,
+            |p| map.find_astar_successors(*p),
+            |p| p.distance(&end_coord),
+            |p| *p == end_coord,
+        );
+
+        if let Some(path) = result {
+            debug_obj_query.iter().for_each(|e| {
+                commands.entity(e).despawn_recursive();
+            });
+
+            path.0.iter().for_each(|coord| {
+                let tlation = (*coord * Vec3::new(1.0, 0.0, 1.0))
+                    + Vec3::new(
+                        map.dimensions.0 as f32 * -0.5,
+                        0.0,
+                        map.dimensions.1 as f32 * -0.5,
+                    );
+                commands
+                    .spawn_bundle(PbrBundle {
+                        mesh: meshes.add(Mesh::from(shape::Cube { size: 0.25 })),
+                        material: materials.add(Color::rgb(1.0, 0.0, 0.0).into()),
+                        transform: Transform::from_translation(tlation),
+                        ..default()
+                    })
+                    .insert(DebugPoint);
+            });
+        }
+
+        control_state.redraw_path = false;
     }
 }

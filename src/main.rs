@@ -35,6 +35,7 @@ mod prelude {
 
     pub use bevy::prelude::*;
     pub use iyes_loopless::prelude::*;
+    pub use pathfinding::prelude::astar;
     pub use std::time::Duration;
 }
 

@@ -60,6 +60,13 @@ impl TileType {
             TileType::Fire => "Fire",
         }
     }
+
+    pub fn astar_cost(&self) -> u32 {
+        match *self {
+            TileType::Water | TileType::Fire => 100,
+            _ => 1,
+        }
+    }
 }
 
 impl std::fmt::Display for TileType {
