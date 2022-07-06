@@ -1,3 +1,8 @@
+[ ] Handle structure on tiles the same way we do tile type changes
+[ ] Consider barricades in pathfinding
+[ ] Build a system to edit enemy wave spawns
+[ ] Add towers as a structure
+
 [ ] Terrain
 [ ] Enemy Movement
 [ ] Elemental Chemistry

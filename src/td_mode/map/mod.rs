@@ -17,6 +17,7 @@ impl Plugin for MapPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(Map::empty())
             .add_plugin(TilePlugin)
+            .add_plugin(StructuresPlugin)
             .add_system(
                 update_changed_tiles
                     .run_in_state(GameState::TDMode)
@@ -138,24 +139,6 @@ mod tests {
         let actual = map.coord_to_idx(Coordinate::from((0, 1)));
         let expected = 1;
 
-        assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn test_adjacent_idx_on_small_map() {
-        let map = Map::new((2, 2));
-
-        let actual = map.coord_adjacent_indices(Coordinate::from((0, 1)));
-        let expected = vec![0, 1, 3];
-
-        assert_eq!(actual, expected);
-
-        let my_coord = Coordinate::from((0, 0));
-        let my_idx = map.coord_to_idx(my_coord);
-        let actual = map.coord_adjacent_indices(my_coord);
-        let expected = vec![1, 2, 3];
-
-        assert_eq!(my_idx, 0);
         assert_eq!(actual, expected);
     }
 }

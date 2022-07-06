@@ -52,6 +52,7 @@ impl SandboxControlState {
 enum Tool {
     Select,
     TileBrush(TileType),
+    StructureBrush(Structure),
     ElementApplicator(Element, f32),
     PlacePiece(TilePiece),
 }
@@ -170,23 +171,16 @@ fn use_tool(
                     let prev_tile_type = map.tile_type_at_coord(coord).unwrap();
 
                     if *prev_tile_type != tile_type {
-                        let map_root = map_root_query.get_single().unwrap();
-                        let tile_idx = map.coord_to_idx(coord);
-                        let tile_entity = map_root.tile_entities[tile_idx];
-                        match tile_type {
-                            TileType::Fire => {
-                                commands
-                                    .spawn()
-                                    .insert(Message)
-                                    .insert(Target(tile_entity))
-                                    .insert(ApplyElement)
-                                    .insert(ElementalAffliction::single(Element::Fire, 100));
-                            }
-                            _ => {}
-                        }
+                        map.set_tile(coord, Some(tile_type), None);
                     }
+                }
 
-                    map.set_tile(coord, tile_type);
+                Tool::StructureBrush(structure) => {
+                    let prev_structure = map.structure_at_coord(coord).unwrap();
+
+                    if *prev_structure != structure {
+                        map.set_tile(coord, None, Some(structure));
+                    }
                 }
 
                 Tool::ElementApplicator(element, mut accumulation) => {

@@ -9,7 +9,7 @@ pub struct Map {
     /// entities needs to be updated
     pub size_dirty: bool,
 
-    tiles: Vec<TileType>,
+    tiles: Vec<(TileType, Structure)>,
 
     /// Flag the index of tiles that have been edited so that the map's entities can be  updated.
     pub dirty_tiles: Vec<usize>,
@@ -23,11 +23,15 @@ impl Map {
         Self::new((0, 0))
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.dimensions == (0, 0)
+    }
+
     pub fn new(dimensions: (usize, usize)) -> Self {
         Self {
             dimensions,
             size_dirty: true,
-            tiles: vec![TileType::Barren; dimensions.0 * dimensions.1],
+            tiles: vec![(TileType::Barren, Structure::None); dimensions.0 * dimensions.1],
             dirty_tiles: Vec::new(),
             wave_entry_coord: Coordinate::ZERO,
             wave_exit_coord: Coordinate::ZERO,
@@ -40,8 +44,10 @@ impl Map {
 
     pub fn resize(&mut self, new_dimensions: (usize, usize)) {
         self.dimensions = new_dimensions;
-        self.tiles
-            .resize(new_dimensions.0 * new_dimensions.1, TileType::Barren);
+        self.tiles.resize(
+            new_dimensions.0 * new_dimensions.1,
+            (TileType::Barren, Structure::None),
+        );
         self.size_dirty = true;
     }
 
@@ -68,34 +74,35 @@ impl Map {
     }
 
     pub fn tile_type_at_index(&self, idx: usize) -> Option<&TileType> {
-        self.tiles.get(idx)
+        self.tiles.get(idx).map(|(t_type, _)| t_type)
     }
 
-    pub fn set_tile(&mut self, coord: Coordinate, tile_type: TileType) {
+    pub fn structure_at_index(&self, idx: usize) -> Option<&Structure> {
+        self.tiles.get(idx).map(|(_, structure)| structure)
+    }
+
+    pub fn set_tile(
+        &mut self,
+        coord: Coordinate,
+        new_tile_type: Option<TileType>,
+        new_structure: Option<Structure>,
+    ) {
         let idx = self.coord_to_idx(coord);
-        self.tiles[idx] = tile_type;
+
+        let t_type = if let Some(tile_type) = new_tile_type {
+            tile_type
+        } else {
+            *self.tile_type_at_index(idx).unwrap()
+        };
+
+        let structure = if let Some(structure) = new_structure {
+            structure
+        } else {
+            *self.structure_at_index(idx).unwrap()
+        };
+
+        self.tiles[idx] = (t_type, structure);
         self.dirty_tiles.push(idx);
-    }
-
-    pub fn coord_adjacent_indices(&self, coord: Coordinate) -> Vec<usize> {
-        let start_x = coord.x.saturating_sub(1);
-        let end_x = (coord.x + 2).min(self.dimensions.0);
-
-        let start_y = coord.y.saturating_sub(1);
-        let end_y = (coord.y + 2).min(self.dimensions.1);
-
-        (start_y..end_y)
-            .flat_map(|y| {
-                (start_x..end_x).filter_map(move |x| {
-                    let this_coord = Coordinate::from((x, y));
-                    if self.coord_in_bounds(this_coord) && this_coord != coord {
-                        Some(self.coord_to_idx(this_coord))
-                    } else {
-                        None
-                    }
-                })
-            })
-            .collect()
     }
 
     pub fn coord_cardinal_indices(&self, coord: Coordinate) -> Vec<usize> {
@@ -119,6 +126,11 @@ impl Map {
     pub fn tile_type_at_coord(&self, coord: Coordinate) -> Option<&TileType> {
         let idx = self.coord_to_idx(coord);
         self.tile_type_at_index(idx)
+    }
+
+    pub fn structure_at_coord(&self, coord: Coordinate) -> Option<&Structure> {
+        let idx = self.coord_to_idx(coord);
+        self.structure_at_index(idx)
     }
 }
 

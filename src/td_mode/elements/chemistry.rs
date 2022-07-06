@@ -81,7 +81,7 @@ fn trigger_reactions(
                 if *tile_type == reaction.tile_type && reaction.check_prereqs_against(&affliction) {
                     // CHANGE TILETYPE IF NECESSARY
                     if let Some(new_tile_type) = reaction.new_tile_type {
-                        map.set_tile(*coord, new_tile_type);
+                        map.set_tile(*coord, Some(new_tile_type), None);
                     }
 
                     // SPAWN AN EVENT MESSAGE IF NECESSARY

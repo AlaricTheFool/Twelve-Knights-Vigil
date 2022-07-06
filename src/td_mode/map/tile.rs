@@ -1,7 +1,5 @@
 //! Code for initializing models and updating tiles in a map
 
-use crate::td_mode::elements::ElementalAffliction;
-
 use super::*;
 
 pub struct TilePlugin;
@@ -14,21 +12,7 @@ impl Plugin for TilePlugin {
             // introduces bugs due to ordering.
             .add_system_to_stage(CoreStage::PreUpdate, update_tile_positions)
             .add_system_to_stage(CoreStage::PreUpdate, update_tile_model);
-
-        /*app.insert_resource(TileInteractionTimer(Timer::from_seconds(0.1, true)))
-            .add_system(
-                spread_fire
-                    .run_in_state(GameState::TDMode)
-                    .run_if(interaction_timer_complete),
-            );
-        */
     }
-}
-
-struct TileInteractionTimer(Timer);
-
-fn interaction_timer_complete(time: Res<Time>, mut timer: ResMut<TileInteractionTimer>) -> bool {
-    timer.0.tick(time.delta()).just_finished()
 }
 
 /// Tag component for tiles
@@ -156,50 +140,4 @@ fn update_tile_model(
         commands.entity(e).insert(ModelRoot(new_root_e));
         trace!("Spawned the models for tile entity: {e:?}");
     });
-}
-
-fn spread_fire(
-    tile_query: Query<(Entity, &TileType, &Coordinate, &ElementalAffliction), With<Tile>>,
-    map_root_query: Query<&MapRoot>,
-    map: Res<Map>,
-    mut commands: Commands,
-) {
-    if let Ok(tiles) = map_root_query.get_single() {
-        tile_query
-            .iter()
-            .filter(|(_, t_type, _, _)| **t_type == TileType::Fire)
-            .for_each(|(entity, _, coord, elemental_affliction)| {
-                let mut indices = map.coord_adjacent_indices(*coord);
-                let remaining_fire = elemental_affliction.get_element_amount(Element::Fire);
-                trace!("Remaining Fire: {remaining_fire}");
-                indices.truncate(remaining_fire as usize);
-
-                let mut actual_added = 0;
-                indices.iter().for_each(|&idx| {
-                    trace!("Adding one heat to tile at idx {idx}");
-                    // ADD FIRE TO INDEX TILE
-                    actual_added += 1;
-                    let target_tile = tiles.tile_entities[idx];
-                    commands
-                        .spawn()
-                        .insert(Message)
-                        .insert(Target(target_tile))
-                        .insert(ApplyElement)
-                        .insert(ElementalAffliction::single(Element::Fire, 1));
-                });
-
-                // REMOVE FIRE FROM SOURCE TILE
-                let amount_to_remove = indices.len();
-                trace!("Removing {amount_to_remove} heat from source tile.");
-                commands
-                    .spawn()
-                    .insert(Message)
-                    .insert(Target(entity))
-                    .insert(RemoveElements)
-                    .insert(ElementalAffliction::single(
-                        Element::Fire,
-                        amount_to_remove as u32,
-                    ));
-            });
-    }
 }
