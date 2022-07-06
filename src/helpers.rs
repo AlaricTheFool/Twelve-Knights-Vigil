@@ -84,6 +84,8 @@ impl Coordinate {
 
         result
     }
+
+    pub const ZERO: Self = Self { x: 0, y: 0 };
 }
 
 /// A pointer to the base of a scene containing models loaded from a gltf format.

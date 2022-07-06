@@ -15,12 +15,13 @@ impl Plugin for TilePlugin {
             .add_system_to_stage(CoreStage::PreUpdate, update_tile_positions)
             .add_system_to_stage(CoreStage::PreUpdate, update_tile_model);
 
-        app.insert_resource(TileInteractionTimer(Timer::from_seconds(0.1, true)))
+        /*app.insert_resource(TileInteractionTimer(Timer::from_seconds(0.1, true)))
             .add_system(
                 spread_fire
                     .run_in_state(GameState::TDMode)
                     .run_if(interaction_timer_complete),
             );
+        */
     }
 }
 
@@ -38,17 +39,19 @@ pub struct Tile;
 pub enum TileType {
     Rock,
     Water,
-    Empty,
+    Air,
     Fire,
+    Barren,
 }
 
 impl TileType {
-    pub fn all() -> [TileType; 4] {
+    pub fn all() -> [TileType; 5] {
         [
             TileType::Rock,
             TileType::Water,
-            TileType::Empty,
+            TileType::Air,
             TileType::Fire,
+            TileType::Barren,
         ]
     }
 
@@ -56,15 +59,18 @@ impl TileType {
         match *self {
             TileType::Rock => "Rock",
             TileType::Water => "Water",
-            TileType::Empty => "Air",
+            TileType::Air => "Air",
             TileType::Fire => "Fire",
+            TileType::Barren => "Barren",
         }
     }
 
     pub fn astar_cost(&self) -> u32 {
         match *self {
             TileType::Water | TileType::Fire => 100,
-            _ => 1,
+            TileType::Air => 9999,
+            TileType::Barren => 1,
+            _ => 5,
         }
     }
 }
@@ -79,8 +85,9 @@ impl std::fmt::Display for TileType {
 struct TileModels {
     rock: Handle<Scene>,
     water: Handle<Scene>,
-    empty: Handle<Scene>,
+    air: Handle<Scene>,
     fire: Handle<Scene>,
+    barren: Handle<Scene>,
 }
 
 impl TileModels {
@@ -88,8 +95,9 @@ impl TileModels {
         match t_type {
             TileType::Rock => self.rock.clone(),
             TileType::Water => self.water.clone(),
-            TileType::Empty => self.empty.clone(),
+            TileType::Air => self.air.clone(),
             TileType::Fire => self.fire.clone(),
+            TileType::Barren => self.barren.clone(),
         }
     }
 }
@@ -99,8 +107,9 @@ fn setup(assets: Res<AssetServer>, mut commands: Commands) {
     let tile_models = TileModels {
         rock: assets.load("models/tile_rock.glb#Scene0"),
         water: assets.load("models/tile_water.glb#Scene0"),
-        empty: assets.load("models/tile_empty.glb#Scene0"),
+        air: assets.load("models/tile_air.glb#Scene0"),
         fire: assets.load("models/tile_fire.glb#Scene0"),
+        barren: assets.load("models/tile_barren.glb#Scene0"),
     };
 
     commands.insert_resource(tile_models);

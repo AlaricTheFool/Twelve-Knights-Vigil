@@ -13,6 +13,9 @@ pub struct Map {
 
     /// Flag the index of tiles that have been edited so that the map's entities can be  updated.
     pub dirty_tiles: Vec<usize>,
+
+    pub wave_entry_coord: Coordinate,
+    pub wave_exit_coord: Coordinate,
 }
 
 impl Map {
@@ -24,8 +27,10 @@ impl Map {
         Self {
             dimensions,
             size_dirty: true,
-            tiles: vec![TileType::Rock; dimensions.0 * dimensions.1],
+            tiles: vec![TileType::Barren; dimensions.0 * dimensions.1],
             dirty_tiles: Vec::new(),
+            wave_entry_coord: Coordinate::ZERO,
+            wave_exit_coord: Coordinate::ZERO,
         }
     }
 
@@ -36,7 +41,7 @@ impl Map {
     pub fn resize(&mut self, new_dimensions: (usize, usize)) {
         self.dimensions = new_dimensions;
         self.tiles
-            .resize(new_dimensions.0 * new_dimensions.1, TileType::Rock);
+            .resize(new_dimensions.0 * new_dimensions.1, TileType::Barren);
         self.size_dirty = true;
     }
 

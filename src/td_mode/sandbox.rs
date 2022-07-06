@@ -34,8 +34,6 @@ struct SandboxControlState {
     new_dimensions: (usize, usize),
     current_tool: Tool,
     selected_tile: Option<Entity>,
-    start_coord: Option<Coordinate>,
-    end_coord: Option<Coordinate>,
     redraw_path: bool,
 }
 
@@ -45,8 +43,6 @@ impl SandboxControlState {
             new_dimensions: (8, 8),
             current_tool: Tool::Select,
             selected_tile: None,
-            start_coord: None,
-            end_coord: None,
             redraw_path: true,
         }
     }
@@ -218,11 +214,11 @@ fn use_tool(
                         control_state.redraw_path = true;
                         match tile_piece {
                             TilePiece::PathStart => {
-                                control_state.start_coord = Some(coord);
+                                map.wave_entry_coord = coord;
                             }
 
                             TilePiece::PathEnd => {
-                                control_state.end_coord = Some(coord);
+                                map.wave_exit_coord = coord;
                             }
                         }
                     }
@@ -245,12 +241,9 @@ fn place_debug_cubes_along_path(
     mut control_state: ResMut<SandboxControlState>,
     mut commands: Commands,
 ) {
-    if (control_state.redraw_path || map.is_changed())
-        && control_state.start_coord.is_some()
-        && control_state.end_coord.is_some()
-    {
-        let start_coord = control_state.start_coord.unwrap();
-        let end_coord = control_state.end_coord.unwrap();
+    if control_state.redraw_path || map.is_changed() {
+        let start_coord = map.wave_entry_coord;
+        let end_coord = map.wave_exit_coord;
         let result = astar(
             &start_coord,
             |p| map.find_astar_successors(*p),

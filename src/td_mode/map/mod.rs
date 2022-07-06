@@ -1,12 +1,14 @@
 //! Map and Tile code
 
 mod map;
+mod structures;
 mod tile;
 
 pub use super::td_mode_prelude::*;
 use crate::prelude::*;
 
 pub use map::*;
+pub use structures::*;
 pub use tile::*;
 
 pub struct MapPlugin;
